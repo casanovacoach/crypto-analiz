@@ -16,7 +16,8 @@ def main():
         record = {
             'id' : coin['id'],
             'change24percentage' : coin['price_change_percentage_24h'],
-            'volume' : coin['total_volume']
+            'volume' : coin['total_volume'],
+            'market_cap' : coin['market_cap']
         }
         coins.append(record)
 
@@ -39,12 +40,14 @@ def main():
         key=lambda x: x['volume'] or 0,
         reverse=True
     )
+    # Сумма капитализации 50ти монет.
+    sum_market_cap = sum(coin.get('market_cap', 0) for coin in coins)
 
-
-    print(coins)
     print('Топ 3 рост за 24 часа: ', up_change[:3])
     print('Топ 3 падение за 24 часа: ', down_change[:3])
     print('Самый крупный по объёму торгов ', volume_sort[:1])
+    print('Общая капитализация 50ти монет: ', sum_market_cap)
+
 
 if __name__ == "__main__":
     main()

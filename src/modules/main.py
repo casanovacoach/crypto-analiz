@@ -20,7 +20,16 @@ def main():
         }
         coins.append(record)
 
+
+    # Сортируем за 24 часа по убыванию
+    best_change = sorted(
+        coins,
+        key=lambda x: x['change24percentage'] or 0,
+        reverse=True)
+
     print(coins)
+
+    print('Топ рост за 24 часа: ', best_change[:3])
 
 if __name__ == "__main__":
     main()

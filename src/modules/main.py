@@ -33,10 +33,18 @@ def main():
         key=lambda x: x['change24percentage'] or 0,
         reverse=False)
 
-    print(coins)
+    # Самый крупный по объёму торгов СОРТ
+    volume_sort = sorted(
+        coins,
+        key=lambda x: x['volume'] or 0,
+        reverse=True
+    )
 
+
+    print(coins)
     print('Топ 3 рост за 24 часа: ', up_change[:3])
     print('Топ 3 падение за 24 часа: ', down_change[:3])
+    print('Самый крупный по объёму торгов ', volume_sort[:1])
 
 if __name__ == "__main__":
     main()

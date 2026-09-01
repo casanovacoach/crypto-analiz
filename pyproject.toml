@@ -1,0 +1,20 @@
+[project]
+name = "modules"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+authors = [
+    { name = "Bogdan", email = "igri228@gmail.com" }
+]
+requires-python = ">=3.14"
+dependencies = [
+    "requests>=2.34.2",
+    "rich>=15.0.0",
+]
+
+[project.scripts]
+modules = "modules:main"
+
+[build-system]
+requires = ["uv_build>=0.12.8,<0.13.0"]
+build-backend = "uv_build"

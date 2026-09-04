@@ -22,7 +22,7 @@ def get_top_gainers(data_coins, n=3):
         key=lambda x: x['change24percentage'] or 0,
         reverse=True)
 
-    return 'Топ 3 рост за 24 часа: ', up_change[:n]
+    return up_change[:n]
 
 
 # Сортируем за 24 часа по возрастанию
@@ -31,7 +31,7 @@ def get_top_loosers(data_coins, n=3):
         data_coins,
         key=lambda x: x['change24percentage'] or 0,
         reverse=False)
-    return 'Топ 3 падение за 24 часа: ', down_change[:n]
+    return down_change[:n]
 
 
 # Самый крупный по объёму торгов СОРТ
@@ -40,7 +40,7 @@ def get_top_value_coin(data_coins, n=1):
         data_coins,
         key=lambda x: x['volume'] or 0,
         reverse=True)
-    return 'Топ по объёму торгов ', volume_sort[:n]
+    return volume_sort[:n]
 
 
 # Сумма капитализации 50ти монет.

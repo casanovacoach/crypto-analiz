@@ -33,46 +33,52 @@ def main():
         response = requests.get(api)
         return response.json()
 
-    data = fetch_coins_data()
-    coins = []
-
     # Создаём список словарей: имя монеты, изменения за 24ч, объём, капитализация
-    for coin in data:
-        record = {
-            'id' : coin['id'],
-            'change24percentage' : coin['price_change_percentage_24h'],
-            'volume' : coin['total_volume'],
-            'market_cap' : coin['market_cap']
-        }
-        coins.append(record)
+    def extract_coin_fields(data):
+        coins = []
+        for coin in data:
+            record = {
+                'id' : coin['id'],
+                'change24percentage' : coin['price_change_percentage_24h'],
+                'volume' : coin['total_volume'],
+                'market_cap' : coin['market_cap']
+            }
+            coins.append(record)
+        return coins
 
 
-    # Сортируем за 24 часа по убыванию
-    up_change = sorted(
-        coins,
+    # # Сортируем за 24 часа по убыванию
+    def get_top_gainers(data_coins, n=3):
+        up_change = sorted(
+        data_coins,
         key=lambda x: x['change24percentage'] or 0,
         reverse=True)
 
+        return 'Топ 3 рост за 24 часа: ', up_change[:3]
 
-    # Сортируем за 24 часа по возрастанию
-    down_change = sorted(
-        coins,
-        key=lambda x: x['change24percentage'] or 0,
-        reverse=False)
 
-    # Самый крупный по объёму торгов СОРТ
-    volume_sort = sorted(
-        coins,
-        key=lambda x: x['volume'] or 0,
-        reverse=True
-    )
+    data = extract_coin_fields((fetch_coins_data()))
+
+    # # Сортируем за 24 часа по возрастанию
+    # down_change = sorted(
+    #     coins,
+    #     key=lambda x: x['change24percentage'] or 0,
+    #     reverse=False)
+    #
+    # # Самый крупный по объёму торгов СОРТ
+    # volume_sort = sorted(
+    #     coins,
+    #     key=lambda x: x['volume'] or 0,
+    #     reverse=True
+    # )
     # Сумма капитализации 50ти монет.
-    sum_market_cap = sum(coin.get('market_cap', 0) for coin in coins)
+    # sum_market_cap = sum(coin.get('market_cap', 0) for coin in coins)
+    #
+    # print('Топ 3 падение за 24 часа: ', down_change[:3])
+    # print('Самый крупный по объёму торгов ', volume_sort[:1])
+    # print('Общая капитализация 50ти монет: ', sum_market_cap)
 
-    print('Топ 3 рост за 24 часа: ', up_change[:3])
-    print('Топ 3 падение за 24 часа: ', down_change[:3])
-    print('Самый крупный по объёму торгов ', volume_sort[:1])
-    print('Общая капитализация 50ти монет: ', sum_market_cap)
+    print(get_top_gainers(data))
 
 if __name__ == "__main__":
     main()

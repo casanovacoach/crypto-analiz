@@ -2,7 +2,11 @@ import requests
 import time
 import functools
 
-API_URL= 'https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=50&page=1'
+API_URL= 'https://api.coingecko.com/api/v3/coins/markets'
+
+API_PARAMS = ('?vs_currency=usd'
+          '&order=market_cap_desc'
+          '&per_page=50&page=1')
 
 
 # декоратор для request запросов, возврат ошибок в случае наличия
@@ -29,6 +33,6 @@ def retry(max_attempts=3, delay=2):
 #запрос get к API_URL и возвращаем .json
 @retry(max_attempts=3, delay=2)
 def fetch_coins_data():
-    response = requests.get(API_URL)
+    response = requests.get(API_URL, params=API_PARAMS, timeout=10)
     response.raise_for_status()
     return response.json()

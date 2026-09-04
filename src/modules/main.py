@@ -1,17 +1,42 @@
+import functools
+
 import requests
-import rich
+from pydantic import decorator
+from rich.console import Console
+import time
 
 def main():
+
     print("Начало программы")
 
-    api = 'https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=50&page=1'
+    def retry(max_attempts=3, delay = 2):
+        def deco(func):
+            @functools.wraps(func)
+            def wrapper(*args, **kwargs):
+                last_exception = None
+                for attempt in range(1, max_attempts + 1):
+                    try:
+                        return func(*args, **kwargs)
+                    except requests.RequestException as e:
+                        last_exception = e
+                        if attempt == max_attempts:
+                            break
+                        print(f'Попытка {attempt} не удалась, ждём {delay}, и делаем ещё попытку.')
+                        time.sleep(delay)
+                raise last_exception
+            return wrapper
+        return deco
 
-    response = requests.get(api)
+    @retry(max_attempts=3, delay=2)
+    def fetch_coins_data():
+        api = 'https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=50&page=1'
+        response = requests.get(api)
+        return response.json()
 
-    data = response.json()
-
+    data = fetch_coins_data()
     coins = []
 
+    # Создаём список словарей: имя монеты, изменения за 24ч, объём, капитализация
     for coin in data:
         record = {
             'id' : coin['id'],
@@ -27,6 +52,7 @@ def main():
         coins,
         key=lambda x: x['change24percentage'] or 0,
         reverse=True)
+
 
     # Сортируем за 24 часа по возрастанию
     down_change = sorted(
@@ -47,7 +73,6 @@ def main():
     print('Топ 3 падение за 24 часа: ', down_change[:3])
     print('Самый крупный по объёму торгов ', volume_sort[:1])
     print('Общая капитализация 50ти монет: ', sum_market_cap)
-
 
 if __name__ == "__main__":
     main()

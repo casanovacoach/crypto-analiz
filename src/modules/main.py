@@ -9,7 +9,7 @@ def main():
     console = Console()
     data = extract_coin_fields((fetch_coins_data()))
 
-    def gainers_loosers_table():
+    def gainers_losers_table():
 
         top_gainers = get_top_gainers(data)[:3]
         top_losers = get_top_losers(data)[:3]
@@ -24,7 +24,7 @@ def main():
 
         console.print(table)
 
-    gainers_loosers_table()
+    gainers_losers_table()
 
 if __name__ == "__main__":
     main()

@@ -14,4 +14,4 @@ def report_generator(data_coins):
     }
 
     with open('crypto_report.json', 'w', encoding='UTF8') as f:
-        f.write(json.dumps(report, indent=4))
+        f.write(json.dumps(report, indent=4, ensure_ascii=False))

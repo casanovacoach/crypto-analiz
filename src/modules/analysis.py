@@ -6,7 +6,8 @@ def extract_coin_fields(data):
     coins = []
     for coin in data:
         record = {
-            'id': coin['id'],
+            'name': coin['name'],
+            'symbol' : coin['symbol'],
             'change24percentage': coin['price_change_percentage_24h'],
             'volume': coin['total_volume'],
             'market_cap': coin['market_cap']

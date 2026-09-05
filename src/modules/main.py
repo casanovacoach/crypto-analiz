@@ -9,7 +9,6 @@ def main():
 
     gainers_losers_table(data)
     report_generator(data)
-
 if __name__ == "__main__":
     main()
 

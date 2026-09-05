@@ -6,8 +6,8 @@ console = Console()
 
 
 def gainers_losers_table(data):
-    top_gainers = get_top_gainers(data)[:3]
-    top_losers = get_top_losers(data)[:3]
+    top_gainers = get_top_gainers(data)
+    top_losers = get_top_losers(data)
 
     table = Table(title='Топ Роста и Падения')
     table.add_column('Рост', justify='right', style='green')
@@ -17,6 +17,6 @@ def gainers_losers_table(data):
 
     #заполнение таблицы с переводом процентов(float) в string
     for g, l in zip(top_gainers, top_losers):
-        table.add_row(g['id'], f'{g['change24percentage']:.2f}%', l['id'], f'{l['change24percentage']:.2f}%')
+        table.add_row(g['id'], f"{g['change24percentage']:.2f}%", l['id'], f"{l['change24percentage']:.2f}%")
 
     console.print(table)

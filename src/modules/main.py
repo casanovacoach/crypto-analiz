@@ -8,8 +8,6 @@ def main():
     with console.status('Загрузка данных...'):
         data = extract_coin_fields((fetch_coins_data()))
 
-    print('Сырой Джисон: ', fetch_coins_data())
-
     print('Джисон с нужными полями: ', data)
 
     #Таблица

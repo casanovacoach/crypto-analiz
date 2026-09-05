@@ -34,13 +34,17 @@ def get_top_losers(data_coins, n=3):
     return down_change[:n]
 
 
-# Самый крупный по объёму торгов СОРТ
-def get_top_value_coin(data_coins, n=1):
+# Самая крупная монета по объёму торгов СОРТ
+def get_top_value_coin(data_coins):
     volume_sort = sorted(
         data_coins,
         key=lambda x: x['volume'] or 0,
         reverse=True)
-    return volume_sort[:n]
+
+    if not volume_sort:
+        return None
+
+    return volume_sort[0]
 
 
 # Сумма капитализации 50ти монет.

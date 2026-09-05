@@ -26,7 +26,7 @@ def get_top_gainers(data_coins, n=3):
 
 
 # Сортируем за 24 часа по возрастанию
-def get_top_loosers(data_coins, n=3):
+def get_top_losers(data_coins, n=3):
     down_change = sorted(
         data_coins,
         key=lambda x: x['change24percentage'] or 0,

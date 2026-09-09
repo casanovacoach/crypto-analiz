@@ -1,12 +1,22 @@
 import json
 import datetime
 
-from analysis import get_sum_market_cap, get_top_gainers, get_top_losers, get_top_value_coin
+from modules.analysis import get_sum_market_cap, get_top_gainers, get_top_losers, get_top_value_coin
 
 def report_generator(data_coins):
     top_gainers = get_top_gainers(data_coins)
     top_losers = get_top_losers(data_coins)
 
+    def coin_to_report(coin):
+        return { "name": coin['name'],
+              "symbol": coin['symbol'],
+              "change_24h": round(coin['change24percentage'], 1),
+                }
+    def coin_to_highest_volume_report(coin):
+        return { "name" : coin['name'],
+                 "symbol": coin["symbol"],
+                 "volume_usd": coin['volume'],
+                 }
 
     report = {
         'generated_at': datetime.datetime.now().isoformat(),
@@ -14,23 +24,18 @@ def report_generator(data_coins):
         'total_market_cap_usd' : get_sum_market_cap(data_coins),
 
         'top_gainers' : [
-            { "name": coin['name'],
-            "symbol": coin['symbol'],
-            "change_24h": round(coin['change24percentage'], 1),
-            }
+            coin_to_report(coin)
             for coin in top_gainers
         ],
 
         'top_losers' : [
-            { "name": coin['name'],
-              "symbol": coin['symbol'],
-              "change_24h": round(coin['change24percentage'], 1),
-                }
-                for coin in top_losers
+            coin_to_report(coin)
+            for coin in top_losers
         ],
 
-        'highest_volume' : get_top_value_coin(data_coins)
+        'highest_volume' : coin_to_highest_volume_report(
+                get_top_value_coin(data_coins))
     }
 
     with open('crypto_report.json', 'w', encoding='UTF8') as f:
-        f.write(json.dumps(report, indent=4, ensure_ascii=False))
+        json.dump(report, f, indent=4, ensure_ascii=False)

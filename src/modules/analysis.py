@@ -41,5 +41,8 @@ def get_top_value_coin(data_coins):
 
 # Сумма капитализации 50ти монет.
 def get_sum_market_cap(data_coins):
-    sum_market_cap = sum(coin.get('market_cap', 0) for coin in data_coins)
+    sum_market_cap = sum(
+        coin['market_cap'] or 0
+        for coin in data_coins)
+
     return sum_market_cap

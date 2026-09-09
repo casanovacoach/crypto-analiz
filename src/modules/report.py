@@ -1,7 +1,7 @@
 import json
 import datetime
 
-from analysis import get_sum_market_cap, get_top_gainers, get_top_losers, get_top_value_coin
+from modules.analysis import get_sum_market_cap, get_top_gainers, get_top_losers, get_top_value_coin
 
 def report_generator(data_coins):
     top_gainers = get_top_gainers(data_coins)

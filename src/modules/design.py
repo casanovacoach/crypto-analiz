@@ -1,6 +1,6 @@
 from rich.console import Console
 from rich.table import Table
-from analysis import get_top_losers, get_top_gainers, get_top_value_coin, get_sum_market_cap
+from modules.analysis import get_top_losers, get_top_gainers, get_top_value_coin, get_sum_market_cap
 
 console = Console()
 

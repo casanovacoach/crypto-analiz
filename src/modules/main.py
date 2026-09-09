@@ -1,7 +1,8 @@
-from api_request import fetch_coins_data
-from analysis import extract_coin_fields, get_top_gainers, get_top_losers, get_sum_market_cap, get_top_value_coin
-from design import gainers_losers_table, console
-from  report import report_generator
+from modules.api_request import fetch_coins_data
+from modules.analysis import extract_coin_fields
+from modules.design import gainers_losers_table, console
+from modules.report import report_generator
+
 def main():
 
 

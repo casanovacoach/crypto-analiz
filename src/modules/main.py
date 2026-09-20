@@ -1,21 +1,26 @@
-from api_request import fetch_coins_data
-from analysis import extract_coin_fields, get_top_gainers, get_top_losers, get_sum_market_cap, get_top_value_coin
-from design import gainers_losers_table, console
-from  report import report_generator
+from modules.api_request import fetch_coins_data
+from modules.analysis import extract_coin_fields, get_top_gainers, get_top_losers, get_top_value_coin, get_sum_market_cap
+from modules.design import gainers_losers_table, console
+from modules.report import report_generator, save_report
+
 def main():
 
     #запрос к api и возвращаем нужные поля в data
     with console.status('Загрузка данных...'):
-        data = extract_coin_fields((fetch_coins_data()))
+        data = extract_coin_fields(fetch_coins_data())
 
-    print('Джисон с нужными полями: ', data)
+    # делаем анализ один раз
+    top_gainers = get_top_gainers(data)
+    top_losers = get_top_losers(data)
+    top_value_coin = get_top_value_coin(data)
+    market_cap = get_sum_market_cap(data)
 
     #Таблица
-    gainers_losers_table(data)
+    gainers_losers_table(top_gainers, top_losers, top_value_coin, market_cap)
 
     #Создаём отчёт
-    report_generator(data)
-
+    report = report_generator(data, top_gainers, top_losers, market_cap, top_value_coin)
+    save_report(report)
 if __name__ == "__main__":
     main()
 

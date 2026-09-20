@@ -33,5 +33,8 @@ def report_generator(data_coins, top_gainers, top_losers, market_cap, top_value_
                 top_value_coin)
     }
 
+    return report
+
+def save_report(report):
     with open('crypto_report.json', 'w', encoding='UTF8') as f:
         json.dump(report, f, indent=4, ensure_ascii=False)

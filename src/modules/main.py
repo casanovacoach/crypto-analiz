@@ -1,7 +1,7 @@
 from modules.api_request import fetch_coins_data
 from modules.analysis import extract_coin_fields, get_top_gainers, get_top_losers, get_top_value_coin, get_sum_market_cap
 from modules.design import gainers_losers_table, console
-from modules.report import report_generator
+from modules.report import report_generator, save_report
 
 def main():
 
@@ -19,8 +19,8 @@ def main():
     gainers_losers_table(top_gainers, top_losers, top_value_coin, market_cap)
 
     #Создаём отчёт
-    report_generator(data, top_gainers, top_losers, market_cap, top_value_coin)
-
+    report = report_generator(data, top_gainers, top_losers, market_cap, top_value_coin)
+    save_report(report)
 if __name__ == "__main__":
     main()
 

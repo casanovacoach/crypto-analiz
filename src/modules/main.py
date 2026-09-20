@@ -5,7 +5,6 @@ from modules.report import report_generator
 
 def main():
 
-
     #запрос к api и возвращаем нужные поля в data
     with console.status('Загрузка данных...'):
         data = extract_coin_fields(fetch_coins_data())

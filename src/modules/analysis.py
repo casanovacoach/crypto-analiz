@@ -35,8 +35,7 @@ def get_top_losers(data_coins, n=3):
 def get_top_value_coin(data_coins):
     return max(
         data_coins,
-        key=lambda x: x['volume'],
-        default=None)
+        key=lambda x: x['volume'])
 
 
 # Сумма капитализации 50ти монет.

@@ -1,11 +1,7 @@
 import json
 import datetime
 
-from modules.analysis import get_sum_market_cap, get_top_gainers, get_top_losers, get_top_value_coin
-
-def report_generator(data_coins):
-    top_gainers = get_top_gainers(data_coins)
-    top_losers = get_top_losers(data_coins)
+def report_generator(data_coins, top_gainers, top_losers, market_cap, top_value_coin):
 
     def coin_to_report(coin):
         return { "name": coin['name'],
@@ -21,7 +17,7 @@ def report_generator(data_coins):
     report = {
         'generated_at': datetime.datetime.now().isoformat(),
         'total_coins_analyzed' : len(data_coins),
-        'total_market_cap_usd' : get_sum_market_cap(data_coins),
+        'total_market_cap_usd' : market_cap,
 
         'top_gainers' : [
             coin_to_report(coin)
@@ -34,7 +30,7 @@ def report_generator(data_coins):
         ],
 
         'highest_volume' : coin_to_highest_volume_report(
-                get_top_value_coin(data_coins))
+                top_value_coin)
     }
 
     with open('crypto_report.json', 'w', encoding='UTF8') as f:

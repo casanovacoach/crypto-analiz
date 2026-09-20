@@ -15,7 +15,7 @@ def report_generator(data_coins, top_gainers, top_losers, market_cap, top_value_
                  }
 
     report = {
-        'generated_at': datetime.datetime.now().isoformat(),
+        'generated_at': datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
         'total_coins_analyzed' : len(data_coins),
         'total_market_cap_usd' : market_cap,
 

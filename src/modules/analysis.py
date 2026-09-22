@@ -1,3 +1,5 @@
+from abc import ABC, abstractmethod
+
 def extract_coin_fields(data):
     coins = []
     for coin in data:
@@ -11,37 +13,54 @@ def extract_coin_fields(data):
         coins.append(record)
     return coins
 
+class Analysis(ABC):
 
-# Сортируем за 24 часа по убыванию
-def get_top_gainers(data_coins, n=3):
-    up_change = sorted(
-        data_coins,
-        key=lambda x: x['change24percentage'],
-        reverse=True)
+    def __init__(self, data):
+        self.data = data
 
-    return up_change[:n]
-
-
-# Сортируем за 24 часа по возрастанию
-def get_top_losers(data_coins, n=3):
-    down_change = sorted(
-        data_coins,
-        key=lambda x: x['change24percentage'],
-        reverse=False)
-    return down_change[:n]
+    @abstractmethod
+    def analyze(self):
+        pass
 
 
-# Самая крупная монета по объёму торгов СОРТ
-def get_top_value_coin(data_coins):
-    return max(
-        data_coins,
-        key=lambda x: x['volume'])
+class GainersAnalysis(Analysis):
+
+    """Сортирует топ 3 монеты подъёма за 24 часа"""
+
+    def analyze(self):
+        up_change = sorted(
+            self.data,
+            key=lambda x: x['change24percentage'],
+            reverse=True)
+
+        return up_change[:3]
+
+class LosersAnalysis(Analysis):
+
+    """Сортирует топ 3 монеты падения за 24 часа"""
+
+    def analyze(self):
+        down_change = sorted(
+            self.data,
+            key=lambda x: x['change24percentage'],
+            reverse=False)
+        return down_change[:3]
 
 
-# Сумма капитализации 50ти монет.
-def get_sum_market_cap(data_coins):
-    sum_market_cap = sum(
-        coin['market_cap']
-        for coin in data_coins)
+class TopValueAnalysis(Analysis):
 
-    return sum_market_cap
+    """Самая крупная монета по объёму торгов"""
+
+    def analyze(self):
+        return max(
+            self.data,
+            key=lambda x: x['volume'])
+
+
+class MarketCapAnalysis(Analysis):
+
+    """Сумма капитализации 50ти монет."""
+
+    def analyze(self):
+
+        return sum(coin['market_cap'] for coin in self.data)

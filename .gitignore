@@ -11,3 +11,6 @@ wheels/
 
 #report
 crypto_report.json
+
+#Sectets
+.env

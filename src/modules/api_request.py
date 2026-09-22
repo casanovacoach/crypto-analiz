@@ -9,10 +9,9 @@ API_PARAMS = {'vs_currency' :'usd',
             'per_page' : 50,
             'page' : 1}
 
-
 # декоратор для request запросов, возврат ошибок в случае наличия
-def retry(max_attempts=3, delay=2):
-    def deco(func):
+def retry(max_attempts, delay):
+     def deco(func):
         @functools.wraps(func)
         def wrapper(*args, **kwargs):
             last_exception = None
@@ -28,12 +27,17 @@ def retry(max_attempts=3, delay=2):
 
         return wrapper
 
-    return deco
+     return deco
 
+class APIRequest:
 
-#запрос get к API_URL и возвращаем .json
-@retry(max_attempts=3, delay=2)
-def fetch_coins_data():
-    response = requests.get(API_URL, params=API_PARAMS, timeout=10)
-    response.raise_for_status()
-    return response.json()
+    def __init__(self, api_url, params):
+        self.api_url = api_url
+        self.params = params
+
+    #запрос get к API_URL и возвращаем .json
+    @retry(max_attempts=3, delay=2)
+    def fetch_coins_data(self):
+        response = requests.get(self.api_url, params=self.params, timeout=10)
+        response.raise_for_status()
+        return response.json()

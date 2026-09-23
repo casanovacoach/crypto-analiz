@@ -1,26 +1,27 @@
 from abc import ABC, abstractmethod
 
-def extract_coin_fields(data):
-    coins = []
-    for coin in data:
-        record = {
-            'name': coin['name'],
-            'symbol' : coin['symbol'],
-            'change24percentage': coin['price_change_percentage_24h'] or 0,
-            'volume': coin['total_volume'] or 0,
-            'market_cap': coin['market_cap'] or 0
-        }
-        coins.append(record)
-    return coins
-
 class Analysis(ABC):
 
     def __init__(self, data):
-        self.data = data
+        self.data = self.extract_coin_fields(data)
 
     @abstractmethod
     def analyze(self):
         pass
+
+    @staticmethod
+    def extract_coin_fields(data):
+        coins = []
+        for coin in data:
+            record = {
+                'name': coin['name'],
+                'symbol': coin['symbol'],
+                'change24percentage': coin['price_change_percentage_24h'] or 0,
+                'volume': coin['total_volume'] or 0,
+                'market_cap': coin['market_cap'] or 0
+            }
+            coins.append(record)
+        return coins
 
 
 class GainersAnalysis(Analysis):

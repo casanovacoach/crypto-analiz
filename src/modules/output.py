@@ -30,11 +30,11 @@ class ConsoleOutput(Output):
         table.add_column('За 24 часа', justify='left', style='red')
         # заполнение таблицы с переводом процентов(float) в string
         for g, l in zip(self.report.top_gainers, self.report.top_losers):
-            table.add_row(g['name'], f"{g['change24percentage']:.2f}%", l['name'], f"{l['change24percentage']:.2f}%")
+            table.add_row(g['name'], f"{g['change_24h']:.2f}%", l['name'], f"{l['change_24h']:.2f}%")
 
         console.print(table)
-        console.print(f"Самый крупный по объёму торгов: [bold green]{self.report.top_value_coin['name']}[/bold green]")
-        console.print(f'Капитал рынка: [bold green]{self.report.market_cap}[/bold green]')
+        console.print(f"Самый крупный по объёму торгов: [bold green]{self.report.highest_volume['name']}[/bold green]")
+        console.print(f'Капитал рынка: [bold green]{self.report.total_market_cap_usd}[/bold green]')
 
 class JsonOutput(Output):
 

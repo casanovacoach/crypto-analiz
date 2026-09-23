@@ -1,24 +1,52 @@
-from modules.api_request import APIRequest, API_URL, API_PARAMS
+from modules.api_request import CoinGeckoRequest, CoinMarketCapRequest
 from modules.analysis import GainersAnalysis, LosersAnalysis, TopValueAnalysis, MarketCapAnalysis
 from modules.output import ConsoleOutput, CsvOutput, JsonOutput
 from modules.report import Report
 
+from dotenv import load_dotenv
+import os
+
+load_dotenv()
+
 def main():
+
+    COINGECKO_URL = 'https://api.coingecko.com/api/v3/coins/markets'
+
+    COINGECKO_PARAMS = {'vs_currency': 'usd',
+                  'order': 'market_cap_desc',
+                  'per_page': 50,
+                  'page': 1}
+
+
+    COINMARKETCAP_URL = 'https://pro-api.coinmarketcap.com/v1/cryptocurrency/listings/latest'
+
+    COINMARKETCAP_PARAMS = {
+        "start": "1",
+        "limit": "10",
+        "convert": "USD",
+    }
+
+    COIN_MARKET_API_KEY = os.getenv('COIN_MARKET_API_KEY')
 
     #запрос к api и возвращаем нужные поля в data
 
-    request = APIRequest(API_URL, API_PARAMS)
-    data_coins = request.fetch_coins_data()
+    #COIN MARKET CAP
+    coin_market_cap_request = CoinMarketCapRequest(COINMARKETCAP_URL, COINMARKETCAP_PARAMS, COIN_MARKET_API_KEY)
+    data_coins_market_cap = coin_market_cap_request.fetch_coins_data()
+
+    # COIN GECKO
+    coin_gecko_request = CoinGeckoRequest(COINGECKO_URL, COINGECKO_PARAMS)
+    data_coins_gecko = coin_gecko_request.fetch_coins_data()
 
 
     # делаем анализ один раз
-    top_gainers = GainersAnalysis(data_coins)
-    top_losers = LosersAnalysis(data_coins)
-    top_value_coin = TopValueAnalysis(data_coins)
-    market_cap = MarketCapAnalysis(data_coins)
+    top_gainers = GainersAnalysis(data_coins_gecko)
+    top_losers = LosersAnalysis(data_coins_gecko)
+    top_value_coin = TopValueAnalysis(data_coins_gecko)
+    market_cap = MarketCapAnalysis(data_coins_gecko)
 
     # Создаём отчёт
-    report = Report(data_coins, top_gainers.analyze(), top_losers.analyze(), market_cap.analyze(), top_value_coin.analyze())
+    report = Report(data_coins_gecko, top_gainers.analyze(), top_losers.analyze(), market_cap.analyze(), top_value_coin.analyze())
     #Ввывод:
 
     #таблица

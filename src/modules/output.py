@@ -41,11 +41,9 @@ class JsonOutput(Output):
     def __init__(self, report):
             super().__init__(report)
 
-
-
     def output(self):
         with open('crypto_report.json', 'w', encoding='UTF8') as f:
-            json.dump(self.report, f, indent=4, ensure_ascii=False)
+            json.dump(self.report.__dict__, f, indent=4, ensure_ascii=False)
 
 
 class CsvOutput(Output):

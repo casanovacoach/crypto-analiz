@@ -19,12 +19,15 @@ def main():
 
     # Создаём отчёт
     report = Report(data_coins, top_gainers.analyze(), top_losers.analyze(), market_cap.analyze(), top_value_coin.analyze())
-
     #Ввывод:
 
-    # #таблица
+    #таблица
     console = ConsoleOutput(report)
     console.output()
+
+    #JSON
+    json_report = JsonOutput(report)
+    json_report.output()
 
 if __name__ == "__main__":
     main()

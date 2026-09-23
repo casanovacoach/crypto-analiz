@@ -29,6 +29,10 @@ def main():
     json_report = JsonOutput(report)
     json_report.output()
 
+    #CSV
+    csv_report = CsvOutput(report)
+    csv_report.output()
+
 if __name__ == "__main__":
     main()
 

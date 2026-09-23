@@ -1,3 +1,4 @@
+import csv
 import json
 from abc import abstractmethod, ABC
 
@@ -52,5 +53,28 @@ class CsvOutput(Output):
             super().__init__(report)
 
     def output(self):
-        with open('crypto_report.json', 'w', encoding='UTF8') as f:
-            json.dump(self.report, f, indent=4, ensure_ascii=False)
+        with open('crypto_report.csv', 'w', newline='', encoding='UTF8') as f:
+
+            dict_csv = []
+
+            for i, coin in enumerate(self.report.top_gainers, start=1):
+                dict_csv.append(
+                    {'type': 'gainer',
+                'rank': i,
+                'name': coin['name'],
+                'symbol': coin['symbol'],
+                'change_24h': coin['change_24h']}
+                )
+
+            for i, coin in enumerate(self.report.top_losers, start=1):
+                dict_csv.append(
+                    {'type': 'loser',
+                     'rank': i,
+                     'name': coin['name'],
+                     'symbol': coin['symbol'],
+                     'change_24h': coin['change_24h'], }
+                )
+
+            writer = csv.DictWriter(f, fieldnames=['type', 'rank', 'name', 'symbol', 'change_24h'])
+            writer.writeheader()
+            writer.writerows(dict_csv)

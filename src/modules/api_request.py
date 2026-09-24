@@ -33,19 +33,34 @@ class APIRequest(ABC):
     def fetch_coins_data(self):
         pass
 
+    @staticmethod
+    @abstractmethod
+    def extract_coin_fields(data):
+        pass
 
 class CoinGeckoRequest(APIRequest):
-
-    def __init__(self, api_url, params):
-        super().__init__(api_url, params)
 
     #запрос get к API_URL и возвращаем .json
     @retry(max_attempts=3, delay=2)
     def fetch_coins_data(self):
         response = requests.get(self.api_url, params=self.params, timeout=10)
         response.raise_for_status()
-        return response.json()
+        data = response.json()
+        return self.extract_coin_fields(data)
 
+    @staticmethod
+    def extract_coin_fields(data):
+        coins = []
+        for coin in data:
+            record = {
+                'name': coin['name'],
+                'symbol': coin['symbol'],
+                'change24percentage': coin['price_change_percentage_24h'] or 0,
+                'volume': coin['total_volume'] or 0,
+                'market_cap': coin['market_cap'] or 0
+            }
+            coins.append(record)
+        return coins
 
 class CoinMarketCapRequest(APIRequest):
 
@@ -61,4 +76,20 @@ class CoinMarketCapRequest(APIRequest):
         }
         response = requests.get(self.api_url, params=self.params,headers=headers, timeout=10)
         response.raise_for_status()
-        return response.json()
+        data = response.json()
+        return self.extract_coin_fields(data)
+
+
+    @staticmethod
+    def extract_coin_fields(data):
+        coins = []
+        for coin in data['data']:
+            record = {
+                'name': coin['name'],
+                'symbol': coin['symbol'],
+                'change24percentage': coin['quote']['USD']['percent_change_24h'] or 0,
+                'volume': coin['quote']['USD']['volume_24h'] or 0,
+                'market_cap': coin['quote']['USD']['market_cap'] or 0
+            }
+            coins.append(record)
+        return coins

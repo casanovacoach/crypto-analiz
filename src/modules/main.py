@@ -1,77 +1,117 @@
 from modules.api_request import CoinGeckoRequest, CoinMarketCapRequest
-from modules.analysis import GainersAnalysis, LosersAnalysis, TopValueAnalysis, MarketCapAnalysis
+from modules.analysis import (
+    GainersAnalysis,
+    LosersAnalysis,
+    TopValueAnalysis,
+    MarketCapAnalysis,
+)
 from modules.output import ConsoleOutput, CsvOutput, JsonOutput
 from modules.report import Report
+from modules.factory import ProviderFactory, OutputFactory
+from modules.types import Source, OutputFormat
 
 from dotenv import load_dotenv
 import os
 
+import typer
+from typing import Annotated
+
 load_dotenv()
 
-def main():
-
-    COINGECKO_URL = 'https://api.coingecko.com/api/v3/coins/markets'
-
-    COINGECKO_PARAMS = {'vs_currency': 'usd',
-                  'order': 'market_cap_desc',
-                  'per_page': 50,
-                  'page': 1}
+app = typer.Typer()
 
 
-    COINMARKETCAP_URL = 'https://pro-api.coinmarketcap.com/v1/cryptocurrency/listings/latest'
+@app.command()
+def main(
+    source: Annotated[Source, typer.Option()],
+    output: Annotated[OutputFormat, typer.Option()],
+    top: Annotated[int, typer.Option()] = 3,
+):
+    # -------------------------
+    # Конфигурация API
+    # -------------------------
 
-    COINMARKETCAP_PARAMS = {
-        'start': 1,
-        'limit': 50,
-        'convert': 'USD',
-        'sort': 'market_cap',
-        'sort_dir': 'desc',
+    COINGECKO_URL = "https://api.coingecko.com/api/v3/coins/markets"
+
+    COINGECKO_PARAMS = {
+        "vs_currency": "usd",
+        "order": "market_cap_desc",
+        "per_page": 50,
+        "page": 1,
     }
 
-    COIN_MARKET_API_KEY = os.getenv('COIN_MARKET_API_KEY')
+    COINMARKETCAP_URL = (
+        "https://pro-api.coinmarketcap.com/v1/cryptocurrency/listings/latest"
+    )
 
-    #запрос к api и возвращаем нужные поля в data
+    COINMARKETCAP_PARAMS = {
+        "start": 1,
+        "limit": 50,
+        "convert": "USD",
+        "sort": "market_cap",
+        "sort_dir": "desc",
+    }
 
-    #COIN MARKET CAP
-    coin_market_cap_request = CoinMarketCapRequest(COINMARKETCAP_URL, COINMARKETCAP_PARAMS, COIN_MARKET_API_KEY)
-    data_market = coin_market_cap_request.fetch_coins_data()
+    COIN_MARKET_API_KEY = os.getenv("COIN_MARKET_API_KEY")
 
-    # # COIN GECKO
-    coin_gecko_request = CoinGeckoRequest(COINGECKO_URL, COINGECKO_PARAMS)
-    data_gecko = coin_gecko_request.fetch_coins_data()
+    # -------------------------
+    # Провайдеры
+    # -------------------------
 
-    # У двух апи разные монеты приходят, вот проверка:
-    # market_key = [coin['name'] for coin in data_market]
-    # gecko_key = [coin['name'] for coin in data_gecko]
-    # only_market = set(market_key) - set(gecko_key)
-    # only_gecko = set(gecko_key) - set(market_key)
-    # print('Только CMC:', only_market)
-    # print('Только CoinGecko:', only_gecko)
+    provider_factories = {
+        Source.COINGECKO: lambda: CoinGeckoRequest(
+            COINGECKO_URL,
+            COINGECKO_PARAMS,
+        ),
+        Source.COINMARKETCAP: lambda: CoinMarketCapRequest(
+            COINMARKETCAP_URL,
+            COINMARKETCAP_PARAMS,
+            COIN_MARKET_API_KEY,
+        ),
+    }
 
-    # делаем анализ один раз
-    top_gainers = GainersAnalysis(data_market)
-    top_losers = LosersAnalysis(data_market)
-    top_value_coin = TopValueAnalysis(data_market)
-    market_cap = MarketCapAnalysis(data_market)
+    provider_factory = ProviderFactory(provider_factories)
+    provider = provider_factory.create(source)
 
-    # Создаём отчёт
-    report = Report(data_market, top_gainers.analyze(), top_losers.analyze(), market_cap.analyze(), top_value_coin.analyze())
+    # Получаем данные только от выбранного провайдера
+    data = provider.fetch_coins_data()
 
-    #Ввывод:
+    # -------------------------
+    # Анализ
+    # -------------------------
 
-    #таблица
-    console = ConsoleOutput(report)
-    console.output()
+    top_gainers = GainersAnalysis(data)
+    top_losers = LosersAnalysis(data)
+    top_value_coin = TopValueAnalysis(data)
+    market_cap = MarketCapAnalysis(data)
 
-    #JSON
-    json_report = JsonOutput(report)
-    json_report.output()
+    # -------------------------
+    # Отчёт
+    # -------------------------
 
-    #CSV
-    csv_report = CsvOutput(report)
-    csv_report.output()
+    report = Report(
+        data,
+        top_gainers.analyze(top),
+        top_losers.analyze(top),
+        market_cap.analyze(),
+        top_value_coin.analyze(),
+    )
+
+    # -------------------------
+    # Вывод
+    # -------------------------
+
+    output_factories = {
+        OutputFormat.CONSOLE: ConsoleOutput,
+        OutputFormat.JSON: JsonOutput,
+        OutputFormat.CSV: CsvOutput,
+    }
+
+    output_factory = OutputFactory(output_factories)
+    output_handler = output_factory.create(output, report)
+
+    output_handler.output()
+
 
 if __name__ == "__main__":
-    main()
-
-
+    app()

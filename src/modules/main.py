@@ -1,3 +1,10 @@
+import os
+import requests
+import typer
+
+from typing import Annotated
+from dotenv import load_dotenv
+
 from modules.api_request import CoinGeckoRequest, CoinMarketCapRequest
 from modules.analysis import (
     GainersAnalysis,
@@ -5,16 +12,12 @@ from modules.analysis import (
     TopValueAnalysis,
     MarketCapAnalysis,
 )
+from modules.coin import CoinCollection
 from modules.output import ConsoleOutput, CsvOutput, JsonOutput
-from modules.report import Report
 from modules.factory import ProviderFactory, OutputFactory
-from modules.types import Source, OutputFormat
+from modules.report import Report
+from modules.typer_option import Source, OutputFormat
 
-from dotenv import load_dotenv
-import os
-
-import typer
-from typing import Annotated
 
 load_dotenv()
 
@@ -27,45 +30,42 @@ def main(
     output: Annotated[OutputFormat, typer.Option()],
     top: Annotated[int, typer.Option()] = 3,
 ):
-    # -------------------------
-    # Конфигурация API
-    # -------------------------
-
-    COINGECKO_URL = "https://api.coingecko.com/api/v3/coins/markets"
+    COINGECKO_URL = 'https://api.coingecko.com/api/v3/coins/markets'
 
     COINGECKO_PARAMS = {
-        "vs_currency": "usd",
-        "order": "market_cap_desc",
-        "per_page": 50,
-        "page": 1,
+        'vs_currency': 'usd',
+        'order': 'market_cap_desc',
+        'per_page': 50,
+        'page': 1,
     }
 
     COINMARKETCAP_URL = (
-        "https://pro-api.coinmarketcap.com/v1/cryptocurrency/listings/latest"
+        'https://pro-api.coinmarketcap.com/v1/cryptocurrency/listings/latest'
     )
 
     COINMARKETCAP_PARAMS = {
-        "start": 1,
-        "limit": 50,
-        "convert": "USD",
-        "sort": "market_cap",
-        "sort_dir": "desc",
+        'start': 1,
+        'limit': 50,
+        'convert': 'USD',
+        'sort': 'market_cap',
+        'sort_dir': 'desc',
     }
 
-    COIN_MARKET_API_KEY = os.getenv("COIN_MARKET_API_KEY")
+    COIN_MARKET_API_KEY = os.getenv('COIN_MARKET_API_KEY')
 
-    # -------------------------
-    # Провайдеры
-    # -------------------------
+    session = requests.Session()
 
     provider_factories = {
         Source.COINGECKO: lambda: CoinGeckoRequest(
             COINGECKO_URL,
             COINGECKO_PARAMS,
+            session,
         ),
+
         Source.COINMARKETCAP: lambda: CoinMarketCapRequest(
             COINMARKETCAP_URL,
             COINMARKETCAP_PARAMS,
+            session,
             COIN_MARKET_API_KEY,
         ),
     }
@@ -73,42 +73,32 @@ def main(
     provider_factory = ProviderFactory(provider_factories)
     provider = provider_factory.create(source)
 
-    # Получаем данные только от выбранного провайдера
-    data = provider.fetch_coins_data()
+    with provider:
+        coins = provider.fetch_coins_data()
 
-    # -------------------------
-    # Анализ
-    # -------------------------
+    collection = CoinCollection(coins)
 
-    top_gainers = GainersAnalysis(data)
-    top_losers = LosersAnalysis(data)
-    top_value_coin = TopValueAnalysis(data)
-    market_cap = MarketCapAnalysis(data)
-
-    # -------------------------
-    # Отчёт
-    # -------------------------
+    top_gainers = GainersAnalysis(collection)
+    top_losers = LosersAnalysis(collection)
+    top_value_coin = TopValueAnalysis(collection)
+    market_cap = MarketCapAnalysis(collection)
 
     report = Report(
-        data,
+        collection,
         top_gainers.analyze(top),
         top_losers.analyze(top),
         market_cap.analyze(),
         top_value_coin.analyze(),
     )
 
-    # -------------------------
-    # Вывод
-    # -------------------------
-
     output_factories = {
-        OutputFormat.CONSOLE: ConsoleOutput,
-        OutputFormat.JSON: JsonOutput,
-        OutputFormat.CSV: CsvOutput,
+        OutputFormat.CONSOLE: lambda: ConsoleOutput(report),
+        OutputFormat.JSON: lambda: JsonOutput(report),
+        OutputFormat.CSV: lambda: CsvOutput(report),
     }
 
     output_factory = OutputFactory(output_factories)
-    output_handler = output_factory.create(output, report)
+    output_handler = output_factory.create(output)
 
     output_handler.output()
 

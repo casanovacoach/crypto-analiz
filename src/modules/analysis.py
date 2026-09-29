@@ -1,52 +1,34 @@
 from abc import ABC, abstractmethod
 
+
 class Analysis(ABC):
 
-    def __init__(self, data):
-        self.data = data
+    def __init__(self, collection):
+        self.collection = collection
 
     @abstractmethod
-    def analyze(self):
+    def analyze(self, n=3):
         pass
+
 
 class GainersAnalysis(Analysis):
 
-    """Сортирует топ 3 монеты подъёма за 24 часа"""
-
-    def analyze(self, top):
-        up_change = sorted(
-            self.data,
-            key=lambda x: x['change24percentage'],
-            reverse=True)
-
-        return up_change[:top]
+    def analyze(self, n=3):
+        return self.collection.top_gainers(n)
 
 class LosersAnalysis(Analysis):
 
-    """Сортирует топ 3 монеты падения за 24 часа"""
-
-    def analyze(self, top):
-        down_change = sorted(
-            self.data,
-            key=lambda x: x['change24percentage'],
-            reverse=False)
-        return down_change[:top]
+    def analyze(self, n=3):
+        return self.collection.top_losers(n)
 
 
 class TopValueAnalysis(Analysis):
 
-    """Самая крупная монета по объёму торгов"""
-
-    def analyze(self):
-        return max(
-            self.data,
-            key=lambda x: x['volume'])
+    def analyze(self, n=3):
+        return self.collection.top_volume()
 
 
 class MarketCapAnalysis(Analysis):
 
-    """Сумма капитализации 50ти монет."""
-
-    def analyze(self):
-
-        return sum(coin['market_cap'] for coin in self.data)
+    def analyze(self, n=3):
+        return self.collection.total_market_cap()

@@ -49,32 +49,46 @@ class JsonOutput(Output):
 
 class CsvOutput(Output):
 
-    def __init__(self, report):
-            super().__init__(report)
-
     def output(self):
-        with open('crypto_report.csv', 'w', newline='', encoding='UTF8') as f:
+        with open(
+            'crypto_report.csv', 'w', newline='', encoding='UTF8') as f:
 
             dict_csv = []
 
-            for i, coin in enumerate(self.report.top_gainers, start=1):
-                dict_csv.append(
-                    {'type': 'gainer',
-                'rank': i,
-                'name': coin['name'],
-                'symbol': coin['symbol'],
-                'change_24h': coin['change_24h']}
-                )
+            for i, coin in enumerate(
+                self.report.top_gainers,
+                start=1
+            ):
+                dict_csv.append({
+                    'type': 'gainer',
+                    'rank': i,
+                    'name': coin['name'],
+                    'symbol': coin['symbol'],
+                    'change_24h': coin['change_24h']
+                })
 
-            for i, coin in enumerate(self.report.top_losers, start=1):
-                dict_csv.append(
-                    {'type': 'loser',
-                     'rank': i,
-                     'name': coin['name'],
-                     'symbol': coin['symbol'],
-                     'change_24h': coin['change_24h'], }
-                )
+            for i, coin in enumerate(
+                self.report.top_losers,
+                start=1
+            ):
+                dict_csv.append({
+                    'type': 'loser',
+                    'rank': i,
+                    'name': coin['name'],
+                    'symbol': coin['symbol'],
+                    'change_24h': coin['change_24h']
+                })
 
-            writer = csv.DictWriter(f, fieldnames=['type', 'rank', 'name', 'symbol', 'change_24h'])
+            writer = csv.DictWriter(
+                f,
+                fieldnames=[
+                    'type',
+                    'rank',
+                    'name',
+                    'symbol',
+                    'change_24h'
+                ]
+            )
+
             writer.writeheader()
             writer.writerows(dict_csv)

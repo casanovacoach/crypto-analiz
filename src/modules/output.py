@@ -20,8 +20,6 @@ class Output(ABC):
 
 class ConsoleOutput(Output):
 
-    def __init__(self, report):
-            super().__init__(report)
 
     def output(self):
         table = Table(title='Топ Роста и Падения')
@@ -39,8 +37,6 @@ class ConsoleOutput(Output):
 
 class JsonOutput(Output):
 
-    def __init__(self, report):
-            super().__init__(report)
 
     def output(self):
         with open('crypto_report.json', 'w', encoding='UTF8') as f:

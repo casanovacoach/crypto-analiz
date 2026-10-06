@@ -3,7 +3,7 @@ import time
 from abc import ABC, abstractmethod
 
 import requests
-from coin import Coin
+from modules.coin import Coin
 # Декоратор для повторных HTTP-запросов
 def retry(max_attempts, delay):
     def deco(func):
@@ -45,9 +45,20 @@ class APIRequest(ABC):
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.session.close()
 
-    @abstractmethod
+    @retry(max_attempts=3, delay=2)
     def fetch_coins_data(self):
-        pass
+        response = self.session.get(
+            self.api_url,
+            params=self.params,
+            headers=self.headers,
+            timeout=10
+        )
+
+        response.raise_for_status()
+
+        data = response.json()
+
+        return self.extract_coin_fields(data)
 
     @staticmethod
     @abstractmethod
@@ -57,19 +68,10 @@ class APIRequest(ABC):
 
 class CoinGeckoRequest(APIRequest):
 
-    @retry(max_attempts=3, delay=2)
-    def fetch_coins_data(self):
-        response = self.session.get(
-            self.api_url,
-            params=self.params,
-            timeout=10
-        )
 
-        response.raise_for_status()
-
-        data = response.json()
-
-        return self.extract_coin_fields(data)
+    @property
+    def headers(self):
+        return {}
 
     @staticmethod
     def extract_coin_fields(data):
@@ -95,25 +97,12 @@ class CoinMarketCapRequest(APIRequest):
         super().__init__(api_url, params, session)
         self.api_key = api_key
 
-    @retry(max_attempts=3, delay=2)
-    def fetch_coins_data(self):
-        headers = {
+    @property
+    def headers(self):
+        return {
             "Accept": "application/json",
             "X-CMC_PRO_API_KEY": self.api_key,
         }
-
-        response = self.session.get(
-            self.api_url,
-            params=self.params,
-            headers=headers,
-            timeout=10
-        )
-
-        response.raise_for_status()
-
-        data = response.json()
-
-        return self.extract_coin_fields(data)
 
     @staticmethod
     def extract_coin_fields(data):

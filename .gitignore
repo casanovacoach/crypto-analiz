@@ -15,3 +15,8 @@ crypto_report.csv
 
 #Sectets
 .env
+
+# Tests cach
+.coverage
+htmlcov/
+.pytest_cache/

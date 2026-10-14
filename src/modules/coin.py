@@ -2,12 +2,12 @@ class Coin:
 
     def __init__(self, name, symbol, change_24h, volume, market_cap):
         if name.strip() != '':
-            self.name = name
+            self.name = name.strip()
         else:
             raise ValueError('Coin name cannot be empty')
 
         if symbol.strip() != '':
-            self.symbol = symbol
+            self.symbol = symbol.strip()
         else:
             raise ValueError('Coin symbol cannot be empty')
 

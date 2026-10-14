@@ -14,6 +14,37 @@ def test_coin_empty_name(name):
     with pytest.raises(ValueError):
         Coin(name, 'PIG', 11.22242, 233, 777)
 
+def test_coin_name_normalyzed():
+    coin = Coin('   Pigcoin   ', 'PIG', 11.22242, 233, 777)
+    assert coin.name == 'Pigcoin'
+
+@pytest.mark.parametrize("symbol" , ['', ' '])
+def test_coin_empty_symbol(symbol):
+    with pytest.raises(ValueError):
+        Coin('Pigcoin', symbol, 11.22242, 233, 777)
+
+def test_coin_symbol_normalyzed():
+    coin = Coin('Pigcoin', '   PIG   ', 11.22242, 233, 777)
+    assert coin.symbol == 'PIG'
+
+def test_coin_negative_volume():
+    with pytest.raises(ValueError):
+        Coin('Pigcoin', 'PIG', 11.22242, -5, 777)
+
+
+def test_coin_negative_market_cap():
+    with pytest.raises(ValueError):
+        Coin('Pigcoin', 'PIG', 11.22242, 5, -999)
+
+def test_coin_accepts_zero_volume_and_market_cap():
+    coin = Coin('Pigcoin', 'PIG', 11.22242, 0, 0)
+    assert coin.market_cap == 0
+    assert coin.volume == 0
+
+def test_coin_negative_change_24h():
+    coin = Coin('Pigcoin', 'PIG', -1.99, 0, 0)
+    assert coin.change_24h == -1.99
+
 def test_collection_create(ethereum, bitcoin, dogcoin):
     coins_list = [ethereum, bitcoin, dogcoin]
     collection = CoinCollection(coins_list)

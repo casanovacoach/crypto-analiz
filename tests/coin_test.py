@@ -9,6 +9,11 @@ def test_coin_create(bitcoin):
     assert bitcoin.volume == 1000
     assert bitcoin.market_cap == 3500
 
+@pytest.mark.parametrize("name" , ['', ' '])
+def test_coin_empty_name(name):
+    with pytest.raises(ValueError):
+        Coin(name, 'PIG', 11.22242, 233, 777)
+
 def test_collection_create(ethereum, bitcoin, dogcoin):
     coins_list = [ethereum, bitcoin, dogcoin]
     collection = CoinCollection(coins_list)

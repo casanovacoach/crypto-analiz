@@ -12,7 +12,8 @@ def test_fetch_coins_data(mocker):
                 'symbol' : 'BTS',
                 'price_change_percentage_24h' : 5.0,
                 'total_volume' : 71000,
-                'market_cap' : '900000'}
+                'market_cap' : 900000
+            }
 
     session_mock.get.return_value = response_mock
     response_mock.json.return_value = [coin]

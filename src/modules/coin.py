@@ -1,11 +1,26 @@
 class Coin:
 
     def __init__(self, name, symbol, change_24h, volume, market_cap):
-        self.name = name
-        self.symbol = symbol
+        if name.strip() != '':
+            self.name = name
+        else:
+            raise ValueError('Coin name cannot be empty')
+
+        if symbol.strip() != '':
+            self.symbol = symbol
+        else:
+            raise ValueError('Coin symbol cannot be empty')
+
         self.change_24h = change_24h
-        self.volume = volume
-        self.market_cap = market_cap
+        if volume >= 0:
+            self.volume = volume
+        else:
+            raise ValueError('Coin volume cannot be negative')
+
+        if market_cap >= 0:
+            self.market_cap = market_cap
+        else:
+            raise ValueError('Coin market cap cannot be negative')
 
 
     def __lt__(self, other: Coin):

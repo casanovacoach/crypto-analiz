@@ -1,19 +1,28 @@
+import pytest
+
 from modules.analysis import GainersAnalysis, LosersAnalysis, MarketCapAnalysis, TopValueAnalysis
 from modules.coin import Coin, CoinCollection
 
-import pytest
 
 @pytest.fixture
-def data_coin():
-    ethereum = Coin('ethereum', 'ETH', -2.423, 395, 1111)
-    bitcoin = Coin('bitcoin', 'BIT', 5.658567, 1000, 3500)
-    dogcoin = Coin('dogcoin', 'DOG', 0.80004, 700, 298)
-    print(ethereum)
+def bitcoin():
+    return Coin('bitcoin', 'BIT', 5.658567, 1000, 3500)
 
+
+@pytest.fixture
+def ethereum():
+    return Coin('ethereum', 'ETH', -2.423, 395, 1111)
+
+
+@pytest.fixture
+def dogcoin():
+    return Coin('dogcoin', 'DOG', 0.80004, 700, 298)
+
+
+@pytest.fixture
+def data_coin(bitcoin, ethereum, dogcoin):
     collection_coins = [bitcoin, ethereum, dogcoin]
     data_coins = CoinCollection(collection_coins)
-    print('дата коин: ', type(data_coins))
-    print(data_coins.__dict__)
     return data_coins
 
 @pytest.fixture

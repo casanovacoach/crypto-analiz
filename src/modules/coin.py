@@ -45,7 +45,10 @@ class Coin:
 
 class CoinCollection:
     def __init__(self, coins):
-        self.coins = coins
+        if isinstance(coins, list):
+            self.coins = coins
+        else:
+            raise TypeError('Coins must be a list')
 
     def top_gainers(self, n=3):
         return sorted(self.coins, reverse=True)[:n]

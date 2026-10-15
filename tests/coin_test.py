@@ -45,11 +45,6 @@ def test_coin_negative_change_24h():
     coin = Coin('Pigcoin', 'PIG', -1.99, 0, 0)
     assert coin.change_24h == -1.99
 
-def test_collection_create(ethereum, bitcoin, dogcoin):
-    coins_list = [ethereum, bitcoin, dogcoin]
-    collection = CoinCollection(coins_list)
-    assert len(collection.coins) == len(coins_list)
-
 
 def test_coin_lt(bitcoin, dogcoin):
     assert dogcoin < bitcoin
@@ -65,6 +60,32 @@ def test_coin_repr(bitcoin):
 
 def test_coin_str(bitcoin):
     assert str(bitcoin) == f'{bitcoin.name} {bitcoin.symbol} изменение за 24 часа: {bitcoin.change_24h:+.2f}%'
+
+
+def test_collection_create(ethereum, bitcoin, dogcoin):
+    coins_list = [ethereum, bitcoin, dogcoin]
+    collection = CoinCollection(coins_list)
+    assert len(collection.coins) == len(coins_list)
+    assert collection.coins[0] is ethereum
+    assert collection.coins[1] is bitcoin
+    assert collection.coins[2] is dogcoin
+
+
+def test_collection_iter(ethereum, bitcoin, dogcoin):
+    empty_collection = []
+    coins = [ethereum, bitcoin, dogcoin]
+    collection = CoinCollection(coins)
+    for coin in collection:
+        empty_collection.append(coin)
+    assert empty_collection == coins
+
+    for coin in collection:
+        assert isinstance(coin, Coin)
+
+def test_collection_invalid_type(ethereum, bitcoin, dogcoin):
+    coins = (ethereum, bitcoin, dogcoin)
+    with pytest.raises(TypeError):
+        coins_collection = CoinCollection(coins)
 
 
 def test_top_gainers(data_coin):

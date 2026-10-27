@@ -27,14 +27,13 @@ def test_coin_symbol_normalyzed():
     coin = Coin('Pigcoin', '   PIG   ', 11.22242, 233, 777)
     assert coin.symbol == 'PIG'
 
-def test_coin_negative_volume():
+@pytest.mark.parametrize("volume, market_cap", [(-5, 777),
+                                                (5, -999)])
+def test_coin_negative_volume_or_market_cap(volume,
+                                            market_cap):
     with pytest.raises(ValueError):
-        Coin('Pigcoin', 'PIG', 11.22242, -5, 777)
+        Coin('Pigcoin', 'PIG', 11.22242, volume, market_cap)
 
-
-def test_coin_negative_market_cap():
-    with pytest.raises(ValueError):
-        Coin('Pigcoin', 'PIG', 11.22242, 5, -999)
 
 def test_coin_accepts_zero_volume_and_market_cap():
     coin = Coin('Pigcoin', 'PIG', 11.22242, 0, 0)

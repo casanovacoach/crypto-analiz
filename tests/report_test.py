@@ -29,16 +29,36 @@ def test_report_coin(mocker,
 
     assert report.top_gainers == [
         {
-        "name": coin.name,
-        "symbol": coin.symbol,
-        "change_24h": round(coin.change_24h, 2)
+            "name": "bitcoin",
+            "symbol": "BIT",
+            "change_24h": 5.66,
+        },
+        {
+            "name": "dogcoin",
+            "symbol": "DOG",
+            "change_24h": 0.80,
+        },
+        {
+            "name": "ethereum",
+            "symbol": "ETH",
+            "change_24h": -2.42,
         }
-        for coin in top_gainers ]
+    ]
 
     assert report.top_losers == [
         {
-        "name": coin.name,
-        "symbol": coin.symbol,
-        "change_24h": round(coin.change_24h, 2)
+            "name": "ethereum",
+            "symbol": "ETH",
+            "change_24h": -2.42,
+        },
+        {
+            "name": "dogcoin",
+            "symbol": "DOG",
+            "change_24h": 0.80,
+        },
+        {
+            "name": "bitcoin",
+            "symbol": "BIT",
+            "change_24h": 5.66,
         }
-        for coin in top_losers ]
+        ]

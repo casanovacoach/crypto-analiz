@@ -1,21 +1,20 @@
 from typer.testing import CliRunner
 
 from modules.main import app
-from modules.typer_option import Source, OutputFormat
+from modules.typer_option import Source
 
 
 runner = CliRunner()
 
 
 def test_app(mocker, bitcoin, ethereum, dogcoin):
-    # Подготавливаем тестовые монеты
+
     coins = [bitcoin, ethereum, dogcoin]
 
-    # Создаём поддельный API-провайдер
+
     provider = mocker.MagicMock()
     provider.fetch_coins_data.return_value = coins
 
-    # Создаём поддельную фабрику провайдеров
     provider_factory = mocker.MagicMock()
     provider_factory.create.return_value = provider
 
@@ -24,19 +23,8 @@ def test_app(mocker, bitcoin, ethereum, dogcoin):
         return_value=provider_factory,
     )
 
-    # Создаём поддельный обработчик вывода
-    output_handler = mocker.MagicMock()
+    json_output_mock = mocker.patch("modules.main.JsonOutput")
 
-    # Создаём поддельную фабрику форматов вывода
-    output_factory = mocker.MagicMock()
-    output_factory.create.return_value = output_handler
-
-    mocker.patch(
-        "modules.main.OutputFactory",
-        return_value=output_factory,
-    )
-
-    # Запускаем CLI-команду
     result = runner.invoke(
         app,
         [
@@ -46,7 +34,6 @@ def test_app(mocker, bitcoin, ethereum, dogcoin):
         ],
     )
 
-    # Проверяем результат
     assert result.exit_code == 0, result.output
 
     provider_factory.create.assert_called_once_with(
@@ -54,7 +41,10 @@ def test_app(mocker, bitcoin, ethereum, dogcoin):
     )
     provider.fetch_coins_data.assert_called_once_with()
 
-    output_factory.create.assert_called_once_with(
-        OutputFormat.JSON
-    )
-    output_handler.output.assert_called_once_with()
+    json_output_mock.assert_called_once()
+    report = json_output_mock.call_args.args[0]
+
+    assert len(report.top_gainers) == 3
+    assert len(report.top_losers) == 3
+
+    json_output_mock.return_value.output.assert_called_once_with()

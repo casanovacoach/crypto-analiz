@@ -53,7 +53,18 @@ def test_coin_lt(bitcoin, dogcoin):
 def test_coin_gt(bitcoin, dogcoin):
     assert bitcoin > dogcoin
 
+def test_coin_not_implemented(bitcoin):
+    fake_coin = ('Pigcoin', 'PIG', 11.22242, 233, 777)
+    assert bitcoin.__lt__(fake_coin) is NotImplemented
+    assert bitcoin.__gt__(fake_coin) is NotImplemented
 
+@pytest.mark.parametrize("fake_coin", [5, 'x', {}])
+def test_type_error_equality(bitcoin, fake_coin):
+    with pytest.raises(TypeError):
+        bitcoin > fake_coin
+
+    with pytest.raises(TypeError):
+        bitcoin < fake_coin
 def test_coin_repr(bitcoin):
     assert repr(bitcoin) == f'{bitcoin.name} {bitcoin.symbol} {bitcoin.change_24h:+.2f}'
 
@@ -87,16 +98,32 @@ def test_collection_invalid_type(ethereum, bitcoin, dogcoin):
     with pytest.raises(TypeError):
         coins_collection = CoinCollection(coins)
 
+@pytest.mark.parametrize("n, expected_names",
+                         [
+                             (1, ['bitcoin']),
+                            (2, ['bitcoin','dogcoin']),
+                            (3, ['bitcoin','dogcoin','ethereum'])
+                          ]
+                         )
+def test_top_gainers(data_coin, n, expected_names):
+    top_gainers = data_coin.top_gainers(n)
+    actual_coin = []
+    for coin in top_gainers:
+        actual_coin.append(coin.name)
+    assert actual_coin == expected_names
 
-def test_top_gainers(data_coin):
-    top_gainers = data_coin.top_gainers()
-    assert top_gainers[0].name == 'bitcoin'
-    assert top_gainers[2].name == 'ethereum'
-
-
-def test_top_losers(data_coin):
-    top_losers = data_coin.top_losers()
-    assert top_losers[0].name == 'ethereum'
+@pytest.mark.parametrize("n, expected_names",
+                         [ (1, ['ethereum']),
+                         (2, ['ethereum','dogcoin']),
+                         (3, ['ethereum','dogcoin','bitcoin'])
+                            ]
+                         )
+def test_top_losers(data_coin, n, expected_names ):
+    top_losers = data_coin.top_losers(n)
+    actual_coin = []
+    for coin in top_losers:
+        actual_coin.append(coin.name)
+    assert actual_coin == expected_names
 
 def test_top_volume(data_coin):
     top_volume = data_coin.top_volume()

@@ -1,11 +1,26 @@
 class Coin:
 
     def __init__(self, name, symbol, change_24h, volume, market_cap):
-        self.name = name
-        self.symbol = symbol
+        if name.strip() != '':
+            self.name = name.strip()
+        else:
+            raise ValueError('Coin name cannot be empty')
+
+        if symbol.strip() != '':
+            self.symbol = symbol.strip()
+        else:
+            raise ValueError('Coin symbol cannot be empty')
+
         self.change_24h = change_24h
-        self.volume = volume
-        self.market_cap = market_cap
+        if volume >= 0:
+            self.volume = volume
+        else:
+            raise ValueError('Coin volume cannot be negative')
+
+        if market_cap >= 0:
+            self.market_cap = market_cap
+        else:
+            raise ValueError('Coin market cap cannot be negative')
 
 
     def __lt__(self, other: Coin):
@@ -30,7 +45,10 @@ class Coin:
 
 class CoinCollection:
     def __init__(self, coins):
-        self.coins = coins
+        if isinstance(coins, list):
+            self.coins = coins
+        else:
+            raise TypeError('Coins must be a list')
 
     def top_gainers(self, n=3):
         return sorted(self.coins, reverse=True)[:n]

@@ -1,10 +1,25 @@
 from modules.output import JsonOutput, CsvOutput, ConsoleOutput
 from rich.text import Text
-import json, csv
 
-@pytest.fixture.parametrize
-def test_interface_output():
-    pass
+import json, csv
+import pytest
+
+@pytest.mark.parametrize('output_class',
+                            [
+                                JsonOutput,
+                                CsvOutput,
+                                ConsoleOutput
+                            ]
+                            )
+def test_interface_output(output_class,
+                          report,
+                          tmp_path,
+                          monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    outputter = output_class(report)
+    outputter.output()
+
+
 def test_json_output(report, tmp_path, monkeypatch):
 
     monkeypatch.chdir(tmp_path)

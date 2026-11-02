@@ -1,8 +1,14 @@
-from modules.output import JsonOutput, CsvOutput, ConsoleOutput
+import csv
+import json
+
+import pytest
 from rich.text import Text
 
-import json, csv
-import pytest
+from modules.output import (
+    JsonOutput,
+    CsvOutput,
+    ConsoleOutput,
+)
 
 @pytest.mark.parametrize('output_class',
                             [
@@ -55,6 +61,21 @@ def test_csv_output(report, tmp_path, monkeypatch):
             }
 
         expected_fieldnames = ['type', 'rank', 'name', 'symbol', 'change_24h']
+
+        for i, coin in enumerate(report.top_gainers, start=1):
+            assert rows[i - 1]['type'] == 'gainer'
+            assert rows[i - 1]['rank'] == str(i)
+            assert rows[i - 1]['name'] == coin['name']
+            assert rows[i - 1]['symbol'] == coin['symbol']
+            assert rows[i - 1]['change_24h'] == str(coin['change_24h'])
+
+        index_losers = len(report.top_gainers)
+        for i, coin in enumerate(report.top_losers, start=1):
+            assert rows[index_losers + i - 1]['type'] == 'loser'
+            assert rows[index_losers + i - 1]['rank'] == str(i)
+            assert rows[index_losers + i - 1]['name'] == coin['name']
+            assert rows[index_losers + i - 1]['symbol'] == coin['symbol']
+            assert rows[index_losers + i - 1]['change_24h'] == str(coin['change_24h'])
 
         assert reader.fieldnames == expected_fieldnames
         assert len(report.top_gainers) + len(report.top_losers) == len(rows)

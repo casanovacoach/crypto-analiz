@@ -1,6 +1,10 @@
-from modules.output import JsonOutput, CsvOutput
+from modules.output import JsonOutput, CsvOutput, ConsoleOutput
+from rich.text import Text
 import json, csv
 
+@pytest.fixture.parametrize
+def test_interface_output():
+    pass
 def test_json_output(report, tmp_path, monkeypatch):
 
     monkeypatch.chdir(tmp_path)
@@ -51,3 +55,14 @@ def test_csv_output(report, tmp_path, monkeypatch):
 
         loser_index = len(report.top_gainers)
         assert rows[loser_index] == expected_row_losers
+
+
+def test_console_output(capfd, report):
+    console_output = ConsoleOutput(report)
+    console_output.output()
+    captured = capfd.readouterr()
+    plain_output = Text.from_ansi(captured.out).plain
+    assert 'Топ Роста и Падения' in plain_output
+    assert f'{report.top_gainers[0]["name"]}' in plain_output
+    assert f'{report.highest_volume["name"]}' in plain_output
+    assert f'Капитал рынка: {report.total_market_cap_usd}' in plain_output

@@ -14,6 +14,7 @@ from modules.analysis import (
 )
 from modules.coin import CoinCollection
 from modules.output import ConsoleOutput, CsvOutput, JsonOutput
+from modules.storage import JsonStorage, SqliteStorage
 from modules.factory import ProviderFactory, OutputFactory
 from modules.report import Report
 from modules.typer_option import Source, OutputFormat
@@ -102,6 +103,8 @@ def main(
 
     output_handler.output()
 
+    storage = JsonStorage()
+    storage.save(report.__dict__)
 
 if __name__ == "__main__":
     app()

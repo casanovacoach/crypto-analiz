@@ -5,7 +5,6 @@ import typer
 from typing import Annotated
 from dotenv import load_dotenv
 
-from modules import settings
 from modules.api_request import CoinGeckoRequest, CoinMarketCapRequest
 from modules.analysis import (
     GainersAnalysis,
@@ -18,8 +17,9 @@ from modules.output import ConsoleOutput, CsvOutput, JsonOutput
 
 from modules.factory import ProviderFactory, OutputFactory, StorageFactory
 from modules.report import Report
-from modules.typer_option import Source, OutputFormat, StorageType
+from modules.typer_option import Source, OutputFormat
 from modules.storage import JsonStorage, SqliteStorage
+from modules.settings import Settings, StorageType
 
 load_dotenv()
 
@@ -109,13 +109,14 @@ def main(
         StorageType.SQLITE: SqliteStorage,
     }
 
+    settings = Settings()
+
     storage_data = {
         "report" : report.__dict__,
         "coins" : collection.coins
     }
     storage_factory = StorageFactory(storage_factories)
     storage = storage_factory.create(settings.storage)
-
     storage.save(storage_data)
 
 if __name__ == "__main__":

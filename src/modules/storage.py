@@ -24,10 +24,11 @@ class SqliteStorage(BaseStorage):
     def save(self, results: dict) -> None:
 
         coins = results['coins']
+        rows = []
+
         with closing(sqlite3.connect("crypto.db")) as conn:
             with conn:
-                cursor = conn.cursor()
-                cursor.execute("PRAGMA foreign_keys = ON")
+                conn.execute("PRAGMA foreign_keys = ON")
 
                 conn.execute("""
                 CREATE TABLE IF NOT EXISTS snapshots (
@@ -36,10 +37,15 @@ class SqliteStorage(BaseStorage):
                 )
                 """)
 
-                conn.execute(
+                cursor = conn.execute(
                     " INSERT INTO snapshots (created_at) VALUES (?)",
                     (datetime.now().strftime("%Y-%m-%d %H:%M:%S"),))
-
+                last_snapshot_id = cursor.lastrowid
+                for coin in coins:
+                    rows.append((last_snapshot_id,
+                                str(coin.coin_id),
+                                coin.name,
+                                coin.price))
                 conn.execute("""
                 CREATE TABLE IF NOT EXISTS coin_prices(
                 snapshot_id INTEGER NOT NULL,
@@ -50,4 +56,6 @@ class SqliteStorage(BaseStorage):
                 FOREIGN KEY (snapshot_id) REFERENCES snapshots(snapshot_id)
                 )
                 """)
-                conn.close()
+                conn.executemany("INSERT INTO coin_prices(snapshot_id, coin_id, coin_name, price) "
+                             "VALUES (?, ?, ?, ?)",
+                            rows)

@@ -1,16 +1,17 @@
 class Coin:
 
-    def __init__(self, name, symbol, change_24h, volume, market_cap):
+    def __init__(self, name, coin_id, symbol, price, change_24h, volume, market_cap):
         if name.strip() != '':
             self.name = name.strip()
         else:
             raise ValueError('Coin name cannot be empty')
-
+        self.coin_id = coin_id
         if symbol.strip() != '':
             self.symbol = symbol.strip()
         else:
             raise ValueError('Coin symbol cannot be empty')
 
+        self.price = price
         self.change_24h = change_24h
         if volume >= 0:
             self.volume = volume

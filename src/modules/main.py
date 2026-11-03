@@ -5,6 +5,7 @@ import typer
 from typing import Annotated
 from dotenv import load_dotenv
 
+from modules import settings
 from modules.api_request import CoinGeckoRequest, CoinMarketCapRequest
 from modules.analysis import (
     GainersAnalysis,
@@ -14,11 +15,11 @@ from modules.analysis import (
 )
 from modules.coin import CoinCollection
 from modules.output import ConsoleOutput, CsvOutput, JsonOutput
-from modules.storage import JsonStorage, SqliteStorage
-from modules.factory import ProviderFactory, OutputFactory
-from modules.report import Report
-from modules.typer_option import Source, OutputFormat
 
+from modules.factory import ProviderFactory, OutputFactory, StorageFactory
+from modules.report import Report
+from modules.typer_option import Source, OutputFormat, StorageType
+from modules.storage import JsonStorage, SqliteStorage
 
 load_dotenv()
 
@@ -29,7 +30,7 @@ app = typer.Typer()
 def main(
     source: Annotated[Source, typer.Option()],
     output: Annotated[OutputFormat, typer.Option()],
-    top: Annotated[int, typer.Option()] = 3,
+    top: Annotated[int, typer.Option()] = 3
 ):
     COINGECKO_URL = 'https://api.coingecko.com/api/v3/coins/markets'
 
@@ -103,8 +104,19 @@ def main(
 
     output_handler.output()
 
-    storage = JsonStorage()
-    storage.save(report.__dict__)
+    storage_factories = {
+        StorageType.JSON: JsonStorage,
+        StorageType.SQLITE: SqliteStorage,
+    }
+
+    storage_data = {
+        "report" : report.__dict__,
+        "coins" : collection.coins
+    }
+    storage_factory = StorageFactory(storage_factories)
+    storage = storage_factory.create(settings.storage)
+
+    storage.save(storage_data)
 
 if __name__ == "__main__":
     app()

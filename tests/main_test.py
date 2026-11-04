@@ -30,7 +30,7 @@ def test_app(mocker, bitcoin, ethereum, dogcoin):
         [
             "--source", "coinmarketcap",
             "--output", "json",
-            "--top", "3",
+            "--top", "2",
         ],
     )
 
@@ -44,7 +44,7 @@ def test_app(mocker, bitcoin, ethereum, dogcoin):
     json_output_mock.assert_called_once()
     report = json_output_mock.call_args.args[0]
 
-    assert len(report.top_gainers) == 3
-    assert len(report.top_losers) == 3
+    assert len(report.top_gainers) == 2
+    assert len(report.top_losers) == 2
 
     json_output_mock.return_value.output.assert_called_once_with()

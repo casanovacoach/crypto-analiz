@@ -13,6 +13,9 @@ wheels/
 crypto_report.json
 crypto_report.csv
 
+#db
+crypto.db
+
 #Sectets
 .env
 

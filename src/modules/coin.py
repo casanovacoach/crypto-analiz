@@ -22,7 +22,6 @@ class Coin:
         else:
             raise ValueError('Coin market cap cannot be negative')
 
-
     def __lt__(self, other: Coin):
         if not isinstance(other, Coin):
             return NotImplemented
@@ -61,6 +60,12 @@ class CoinCollection:
 
     def total_market_cap(self):
         return sum(coin.market_cap for coin in self.coins)
+
+    def __getitem__(self, item):
+        for coin in self.coins:
+            if coin.symbol == item:
+                return coin
+        raise KeyError(item)
 
     def __iter__(self):
         return iter(self.coins)

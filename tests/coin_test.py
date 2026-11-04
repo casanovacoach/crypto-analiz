@@ -97,6 +97,14 @@ def test_collection_invalid_type(ethereum, bitcoin, dogcoin):
     with pytest.raises(TypeError):
         coins_collection = CoinCollection(coins)
 
+
+def test_getitem_returns_coin_by_symbol(data_coin, bitcoin):
+    assert data_coin['BIT'] == bitcoin
+
+def test_getitem_raises_key_error_for_unknown_symbol(data_coin):
+    with pytest.raises(KeyError):
+        data_coin['GOD']
+
 @pytest.mark.parametrize("n, expected_names",
                          [
                              (1, ['bitcoin']),

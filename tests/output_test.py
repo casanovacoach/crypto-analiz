@@ -1,8 +1,10 @@
 import csv
 import json
-
 import pytest
 from rich.text import Text
+
+import modules.output as output_module
+from types import SimpleNamespace
 
 from modules.output import (
     JsonOutput,
@@ -10,20 +12,27 @@ from modules.output import (
     ConsoleOutput,
 )
 
-@pytest.mark.parametrize('output_class',
+@pytest.mark.parametrize('output_class, expected',
                             [
-                                JsonOutput,
-                                CsvOutput,
-                                ConsoleOutput
+                                (JsonOutput, 'crypto_report.json'),
+                                (CsvOutput, 'crypto_report.csv'),
+                                (ConsoleOutput, 'Топ Роста и Падения')
                             ]
-                            )
-def test_interface_output(output_class,
+                                )
+def test_interface_output(output_class, expected,
                           report,
                           tmp_path,
-                          monkeypatch):
+                          monkeypatch,
+                          capfd):
     monkeypatch.chdir(tmp_path)
     outputter = output_class(report)
     outputter.output()
+    if output_class is ConsoleOutput:
+        captured = capfd.readouterr()
+        assert expected in captured.out
+    else:
+        path = tmp_path / expected
+        assert path.exists()
 
 
 def test_json_output(report, tmp_path, monkeypatch):
@@ -49,48 +58,37 @@ def test_csv_output(report, tmp_path, monkeypatch):
     csv_output.output()
 
     assert path.exists()
+
     with open(path, 'r', encoding='UTF-8') as cf:
         reader = csv.DictReader(cf)
         rows = list(reader)
-        expected_row = {
-                'type': 'gainer',
-                'rank': '1',
-                'name': report.top_gainers[0]['name'],
-                'symbol': report.top_gainers[0]['symbol'],
-                'change_24h': str(report.top_gainers[0]['change_24h'])
-            }
 
-        expected_fieldnames = ['type', 'rank', 'name', 'symbol', 'change_24h']
+        expected_fieldnames = [
+            'type', 'rank', 'name', 'symbol', 'change_24h'
+        ]
+
+        expected_rows = []
 
         for i, coin in enumerate(report.top_gainers, start=1):
-            assert rows[i - 1]['type'] == 'gainer'
-            assert rows[i - 1]['rank'] == str(i)
-            assert rows[i - 1]['name'] == coin['name']
-            assert rows[i - 1]['symbol'] == coin['symbol']
-            assert rows[i - 1]['change_24h'] == str(coin['change_24h'])
+            expected_rows.append({
+                'type': 'gainer',
+                'rank': str(i),
+                'name': coin['name'],
+                'symbol': coin['symbol'],
+                'change_24h': str(coin['change_24h'])
+            })
 
-        index_losers = len(report.top_gainers)
         for i, coin in enumerate(report.top_losers, start=1):
-            assert rows[index_losers + i - 1]['type'] == 'loser'
-            assert rows[index_losers + i - 1]['rank'] == str(i)
-            assert rows[index_losers + i - 1]['name'] == coin['name']
-            assert rows[index_losers + i - 1]['symbol'] == coin['symbol']
-            assert rows[index_losers + i - 1]['change_24h'] == str(coin['change_24h'])
+            expected_rows.append({
+                'type': 'loser',
+                'rank': str(i),
+                'name': coin['name'],
+                'symbol': coin['symbol'],
+                'change_24h': str(coin['change_24h'])
+            })
 
         assert reader.fieldnames == expected_fieldnames
-        assert len(report.top_gainers) + len(report.top_losers) == len(rows)
-        assert rows[0] == expected_row
-
-        expected_row_losers = {
-                'type': 'loser',
-                'rank': '1',
-                'name': report.top_losers[0]['name'],
-                'symbol': report.top_losers[0]['symbol'],
-                'change_24h': str(report.top_losers[0]['change_24h'])
-            }
-
-        loser_index = len(report.top_gainers)
-        assert rows[loser_index] == expected_row_losers
+        assert rows == expected_rows
 
 
 def test_console_output(capfd, report):
@@ -102,3 +100,18 @@ def test_console_output(capfd, report):
     assert f'{report.top_gainers[0]["name"]}' in plain_output
     assert f'{report.highest_volume["name"]}' in plain_output
     assert f'Капитал рынка: {report.total_market_cap_usd}' in plain_output
+
+
+def test_console_output_columns(report, monkeypatch):
+    printed = []
+    monkeypatch.setattr(output_module.console, 'print', printed.append)
+    ConsoleOutput(report).output()
+    table = printed[0]
+    assert table.columns[0].header == 'Рост'
+    assert table.columns[1].header == 'За 24 часа'
+    assert table.columns[2].header == 'Падение'
+    assert table.columns[3].header == 'За 24 часа'
+    assert list(table.columns[0].cells)[0] == report.top_gainers[0]['name']
+    assert list(table.columns[1].cells)[0] == f"{report.top_gainers[0]['change_24h']:.2f}%"
+    assert list(table.columns[2].cells)[0] == report.top_losers[0]['name']
+    assert list(table.columns[3].cells)[0] == f"{report.top_losers[0]['change_24h']:.2f}%"

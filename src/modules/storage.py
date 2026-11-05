@@ -63,6 +63,14 @@ class SqliteStorage(BaseStorage):
                 conn.executemany("INSERT INTO coin_prices(snapshot_id, coin_id, coin_name, price) "
                              "VALUES (?, ?, ?, ?)",
                             rows)
+    def list_snapshots(self):
+        with closing(sqlite3.connect("crypto.db")) as conn:
+            results = conn.execute('''
+                SELECT snapshot_id, created_at
+                FROM snapshots
+                ORDER BY snapshot_id DESC''').fetchall()
+
+            return results
 
     def price_change(self, coin_id):
 

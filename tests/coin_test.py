@@ -98,8 +98,8 @@ def test_collection_invalid_type(ethereum, bitcoin, dogcoin):
         coins_collection = CoinCollection(coins)
 
 
-def test_getitem_returns_coin_by_symbol(data_coin, bitcoin):
-    assert data_coin['BIT'] == bitcoin
+def test_getitem_returns_coin_by_symbol(data_coin, ethereum):
+    assert data_coin['ETH'] == ethereum
 
 def test_getitem_raises_key_error_for_unknown_symbol(data_coin):
     with pytest.raises(KeyError):

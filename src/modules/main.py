@@ -119,5 +119,36 @@ def main(
     storage = storage_factory.create(settings.storage)
     storage.save(storage_data)
 
+@app.command("list-snapshots")
+def list_snapshots_command():
+    storage = SqliteStorage()
+    snapshots = storage.list_snapshots()
+
+    if not snapshots:
+        typer.echo("Снимки пока не сохранены.")
+        return
+
+    for snapshot_id, created_at in snapshots:
+        typer.echo(f'{snapshot_id} | {created_at}')
+
+@app.command("compare-snapshots")
+def compare_snapshot_command(
+        old_id: Annotated[int, typer.Argument()],
+        new_id: Annotated[int, typer.Argument()]):
+
+    storage = SqliteStorage()
+    results = storage.compare_snapshots(old_id, new_id)
+    if not results:
+        typer.echo("Нет данных для сравнения")
+        return
+
+    typer.echo(f'Сравнение снимков {old_id}, и {new_id}:')
+
+    for coin_id, coin_name, old_price, new_price, price_difference in results:
+        typer.echo(
+            f"{coin_name} ({coin_id}): "
+            f"{old_price} -> {new_price} "
+            f"({price_difference:+})"
+        )
 if __name__ == "__main__":
     app()

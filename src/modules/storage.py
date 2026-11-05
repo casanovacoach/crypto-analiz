@@ -80,3 +80,57 @@ class SqliteStorage(BaseStorage):
                 results = cursor.fetchall()
 
                 return results
+
+
+    def compare_snapshots(self, old_id, new_id):
+        with closing(sqlite3.connect("crypto.db")) as conn:
+            with conn:
+                cursor = conn.execute(
+                    '''SELECT old.coin_id, old.coin_name,
+                    old.price AS old_price,
+                    new.price AS new_price,
+                    new.price - old.price AS price_difference
+                    FROM coin_prices AS old
+                    JOIN coin_prices AS new
+                    ON old.coin_id = new.coin_id
+                    WHERE old.snapshot_id = ?
+                    AND new.snapshot_id = ?''',
+                    (old_id, new_id)
+                )
+                results = cursor.fetchall()
+
+                return results
+
+    def get_top_price_movers(self):
+        with closing(sqlite3.connect("crypto.db")) as conn:
+            base_query = '''SELECT old.snapshot_id AS old_snapshot,
+                              new.snapshot_id AS new_snapshot,
+                              old.coin_id, 
+                              old.coin_name,
+                              new.price,
+                    ROUND(((new.price - old.price) / NULLIF(old.price, 0)) * 100, 2 )
+                                  AS change_percent
+                    FROM coin_prices AS new
+                    INNER JOIN coin_prices AS old
+                        ON old.coin_id = new.coin_id
+                    WHERE old.snapshot_id = (
+                          SELECT snapshot_id
+                          FROM snapshots
+                          ORDER BY snapshot_id DESC
+                          LIMIT 1 OFFSET 1)
+                    AND new.snapshot_id = (
+                        SELECT snapshot_id
+                        FROM snapshots
+                        ORDER BY snapshot_id DESC
+                        LIMIT 1)
+                    '''
+
+        top_gainers = conn.execute(base_query +
+                        '''ORDER BY change_percent DESC
+                            LIMIT 5''').fetchall()
+
+        top_losers = conn.execute(base_query +
+                                      '''ORDER BY change_percent ASC
+                                        LIMIT 5''').fetchall()
+
+        return top_gainers, top_losers

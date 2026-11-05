@@ -2,7 +2,20 @@ import pytest
 
 from modules.analysis import GainersAnalysis, LosersAnalysis, MarketCapAnalysis, TopValueAnalysis
 from modules.coin import Coin, CoinCollection
+from modules.report import Report
 
+
+@pytest.fixture
+def report(data_coin,
+           top_gainers,
+           top_losers,
+           market_cap,
+           top_value_coin):
+
+    return Report(data_coin, top_gainers,
+                  top_losers,
+                  market_cap,
+                  top_value_coin)
 
 @pytest.fixture
 def bitcoin():

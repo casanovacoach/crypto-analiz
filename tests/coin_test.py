@@ -12,19 +12,19 @@ def test_coin_create(bitcoin):
 @pytest.mark.parametrize("name" , ['', ' '])
 def test_coin_empty_name(name):
     with pytest.raises(ValueError):
-        Coin(name, 'PIG', 11.22242, 233, 777)
+        Coin(name, 'PIG', 'pig', 11.22242, 5500,233, 777)
 
 def test_coin_name_normalyzed():
-    coin = Coin('   Pigcoin   ', 'PIG', 11.22242, 233, 777)
+    coin = Coin('   Pigcoin   ', 'pig', 'PIG', 11.22242, 5500,233, 777)
     assert coin.name == 'Pigcoin'
 
 @pytest.mark.parametrize("symbol" , ['', ' '])
 def test_coin_empty_symbol(symbol):
     with pytest.raises(ValueError):
-        Coin('Pigcoin', symbol, 11.22242, 233, 777)
+        Coin('Pigcoin', 'pig', symbol, 11.22242, 5500, 233, 777)
 
 def test_coin_symbol_normalyzed():
-    coin = Coin('Pigcoin', '   PIG   ', 11.22242, 233, 777)
+    coin = Coin('Pigcoin', 'pig','   PIG   ', 5500,11.22242, 233, 777)
     assert coin.symbol == 'PIG'
 
 @pytest.mark.parametrize("volume, market_cap", [(-5, 777),
@@ -32,16 +32,16 @@ def test_coin_symbol_normalyzed():
 def test_coin_negative_volume_or_market_cap(volume,
                                             market_cap):
     with pytest.raises(ValueError):
-        Coin('Pigcoin', 'PIG', 11.22242, volume, market_cap)
+        Coin('Pigcoin', 'pig', 'PIG', 5500,11.22242, volume, market_cap)
 
 
 def test_coin_accepts_zero_volume_and_market_cap():
-    coin = Coin('Pigcoin', 'PIG', 11.22242, 0, 0)
+    coin = Coin('Pigcoin', 'pig', 'PIG', 5500, 11.22242,0, 0)
     assert coin.market_cap == 0
     assert coin.volume == 0
 
 def test_coin_negative_change_24h():
-    coin = Coin('Pigcoin', 'PIG', -1.99, 0, 0)
+    coin = Coin('Pigcoin', 'pig', 'PIG',5500, -1.99, 0, 0)
     assert coin.change_24h == -1.99
 
 
@@ -53,7 +53,7 @@ def test_coin_gt(bitcoin, dogcoin):
     assert bitcoin > dogcoin
 
 def test_coin_not_implemented(bitcoin):
-    fake_coin = ('Pigcoin', 'PIG', 11.22242, 233, 777)
+    fake_coin = ('Pigcoin', 'pig', 'PIG', 5000, 11.22242, 233, 777)
     assert bitcoin.__lt__(fake_coin) is NotImplemented
     assert bitcoin.__gt__(fake_coin) is NotImplemented
 

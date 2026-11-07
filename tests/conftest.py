@@ -33,17 +33,17 @@ def report(data_coin,
 
 @pytest.fixture
 def bitcoin():
-    return Coin('bitcoin', 'BIT', 5.658567, 1000, 3500)
+    return Coin('bitcoin', 'bit', 'BIT', 1000, 5.658567, 1000, 3500)
 
 
 @pytest.fixture
 def ethereum():
-    return Coin('ethereum', 'ETH', -2.423, 395, 1111)
+    return Coin('ethereum', 'eth', 'ETH', 70,  -2.423, 395, 1111)
 
 
 @pytest.fixture
 def dogcoin():
-    return Coin('dogcoin', 'DOG', 0.80004, 700, 298)
+    return Coin('dogcoin', 'dog', 'DOG', 25,0.80004, 700, 298)
 
 
 @pytest.fixture

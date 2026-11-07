@@ -113,7 +113,7 @@ class CoinMarketCapRequest(APIRequest):
         for coin in data['data']:
             record = Coin(
                 name=coin['name'],
-                coin_id=['id'],
+                coin_id=coin['id'],
                 symbol=coin['symbol'],
                 price=coin['quote']['USD']['price'],
                 change_24h=coin['quote']['USD']['percent_change_24h'] or 0,

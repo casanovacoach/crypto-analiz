@@ -1,3 +1,5 @@
+from unittest.mock import MagicMock
+
 from typer.testing import CliRunner
 
 from modules.main import app
@@ -17,7 +19,12 @@ def test_app(mocker, bitcoin, ethereum, dogcoin):
 
     provider_factory = mocker.MagicMock()
     provider_factory.create.return_value = provider
+    storage_mock = MagicMock()
+    storage_factory_mock = MagicMock()
+    mocker.patch("modules.main.StorageFactory",
+                 return_value=storage_factory_mock)
 
+    storage_factory_mock.create.return_value=storage_mock
     mocker.patch(
         "modules.main.ProviderFactory",
         return_value=provider_factory,
@@ -28,6 +35,7 @@ def test_app(mocker, bitcoin, ethereum, dogcoin):
     result = runner.invoke(
         app,
         [
+            "main",
             "--source", "coinmarketcap",
             "--output", "json",
             "--top", "2",
@@ -46,5 +54,10 @@ def test_app(mocker, bitcoin, ethereum, dogcoin):
 
     assert len(report.top_gainers) == 2
     assert len(report.top_losers) == 2
+    storage_factory_mock.create.assert_called_once()
+    storage_mock.save.assert_called_once()
+    saved_agrs = storage_mock.save.call_args.args[0]
+    assert saved_agrs["coins"] == coins
+    assert saved_agrs["report"] == report.__dict__
 
     json_output_mock.return_value.output.assert_called_once_with()

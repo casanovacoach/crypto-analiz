@@ -1,9 +1,11 @@
 import os
 import requests
 import typer
+import sqlite3
 
 from typing import Annotated
 from dotenv import load_dotenv
+from contextlib import closing
 
 from modules.api_request import CoinGeckoRequest, CoinMarketCapRequest
 from modules.analysis import (

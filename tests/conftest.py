@@ -1,9 +1,23 @@
 import pytest
+import sqlite3
 
 from modules.analysis import GainersAnalysis, LosersAnalysis, MarketCapAnalysis, TopValueAnalysis
 from modules.coin import Coin, CoinCollection
 from modules.report import Report
+from modules.storage import SqliteStorage
 
+
+@pytest.fixture
+def sqlite_connection():
+    conn = sqlite3.connect(":memory:")
+    yield conn
+    conn.close()
+
+@pytest.fixture
+def sqlite_storage(sqlite_connection):
+    storage = SqliteStorage(sqlite_connection)
+    storage.create_tables()
+    return storage
 
 @pytest.fixture
 def report(data_coin,

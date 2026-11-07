@@ -21,9 +21,12 @@ class JsonStorage(BaseStorage):
 
 class SqliteStorage(BaseStorage):
 
+    def __init__(self, connection ):
+        self.connection = connection
+        self.connection.execute("PRAGMA foreign_keys = ON")
+
     def create_tables(self):
-        with closing(sqlite3.connect("crypto.db")) as conn:
-            conn.execute("PRAGMA foreign_keys = ON")
+        with self.connection as conn:
             conn.execute("""
                          CREATE TABLE IF NOT EXISTS snapshots
                          ( snapshot_id INTEGER PRIMARY KEY,
@@ -43,28 +46,25 @@ class SqliteStorage(BaseStorage):
                          """)
 
     def save(self, results: dict) -> None:
-
         coins = results['coins']
         rows = []
 
-        with closing(sqlite3.connect("crypto.db")) as conn:
-            with conn:
-
-                cursor = conn.execute(
+        with self.connection as conn:
+            cursor = conn.execute(
                     " INSERT INTO snapshots (created_at) VALUES (?)",
                     (datetime.now().strftime("%Y-%m-%d %H:%M:%S"),))
-                last_snapshot_id = cursor.lastrowid
-                for coin in coins:
-                    rows.append((last_snapshot_id,
+            last_snapshot_id = cursor.lastrowid
+            for coin in coins:
+                rows.append((last_snapshot_id,
                                 str(coin.coin_id),
                                 coin.name,
                                 coin.price))
 
-                conn.executemany("INSERT INTO coin_prices(snapshot_id, coin_id, coin_name, price) "
+            conn.executemany("INSERT INTO coin_prices(snapshot_id, coin_id, coin_name, price) "
                              "VALUES (?, ?, ?, ?)",
                             rows)
     def list_snapshots(self):
-        with closing(sqlite3.connect("crypto.db")) as conn:
+        with self.connection as conn:
             results = conn.execute('''
                 SELECT snapshot_id, created_at
                 FROM snapshots
@@ -74,9 +74,8 @@ class SqliteStorage(BaseStorage):
 
     def price_change(self, coin_id):
 
-        with closing(sqlite3.connect("crypto.db")) as conn:
-            with conn:
-                cursor = conn.execute(
+        with self.connection as conn:
+            cursor = conn.execute(
                     '''SELECT s.snapshot_id, s.created_at, cp.coin_id, cp.coin_name, cp.price FROM snapshots AS s
                              JOIN coin_prices AS cp
                              ON s.snapshot_id = cp.snapshot_id
@@ -85,15 +84,14 @@ class SqliteStorage(BaseStorage):
                              (str(coin_id),)
                             )
 
-                results = cursor.fetchall()
+            results = cursor.fetchall()
 
-                return results
+            return results
 
 
     def compare_snapshots(self, old_id, new_id):
-        with closing(sqlite3.connect("crypto.db")) as conn:
-            with conn:
-                cursor = conn.execute(
+        with self.connection as conn:
+            cursor = conn.execute(
                     '''SELECT old.coin_id, old.coin_name,
                     old.price AS old_price,
                     new.price AS new_price,
@@ -105,12 +103,12 @@ class SqliteStorage(BaseStorage):
                     AND new.snapshot_id = ?''',
                     (old_id, new_id)
                 )
-                results = cursor.fetchall()
+            results = cursor.fetchall()
 
-                return results
+            return results
 
     def get_top_price_movers(self):
-        with closing(sqlite3.connect("crypto.db")) as conn:
+        with self.connection as conn:
             base_query = '''SELECT old.snapshot_id AS old_snapshot,
                               new.snapshot_id AS new_snapshot,
                               old.coin_id, 
@@ -133,11 +131,11 @@ class SqliteStorage(BaseStorage):
                         LIMIT 1)
                     '''
 
-        top_gainers = conn.execute(base_query +
+            top_gainers = conn.execute(base_query +
                         '''ORDER BY change_percent DESC
                             LIMIT 5''').fetchall()
 
-        top_losers = conn.execute(base_query +
+            top_losers = conn.execute(base_query +
                                       '''ORDER BY change_percent ASC
                                         LIMIT 5''').fetchall()
 

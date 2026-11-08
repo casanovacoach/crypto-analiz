@@ -3,6 +3,7 @@ from modules.storage import SqliteStorage
 import sqlite3
 import pytest
 
+
 def test_create_tables(sqlite_connection):
     storage = SqliteStorage(sqlite_connection)
     storage.create_tables()
@@ -114,6 +115,11 @@ def test_price_change(sqlite_db, ethereum):
     assert all(isinstance(row[1], str) for row in history)
 
 
+def test_price_change_unknown_coin(sqlite_db):
+    history = sqlite_db.price_change('unknown_coin')
+
+    assert history == []
+
 def test_compare_snapshots(sqlite_db):
     compare = sqlite_db.compare_snapshots(1, 2)
     expected = [
@@ -122,6 +128,12 @@ def test_compare_snapshots(sqlite_db):
         ('eth', 'ethereum', 70, 63, -7)
     ]
     assert compare == expected
+
+
+def test_price_change_unknown_coin(sqlite_db):
+    compare = sqlite_db.compare_snapshots(100, 500)
+
+    assert compare == []
 
 
 def test_get_top_price_movers(sqlite_db):
@@ -140,3 +152,11 @@ def test_get_top_price_movers(sqlite_db):
 
     assert top_losers == expected_losers
     assert top_gainers == expected_gainers
+
+def test_get_top_price_movers_without_two_snapshots(sqlite_storage, data_coin):
+    sqlite_storage.save({'coins': data_coin})
+
+    top_gainers, top_losers = sqlite_storage.get_top_price_movers()
+
+    assert top_gainers == []
+    assert top_losers == []

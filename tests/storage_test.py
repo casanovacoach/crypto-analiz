@@ -1,5 +1,7 @@
 from modules.storage import SqliteStorage
 
+import sqlite3
+import pytest
 
 def test_create_tables(sqlite_connection):
     storage = SqliteStorage(sqlite_connection)
@@ -44,6 +46,21 @@ def test_create_tables_columns(sqlite_connection):
         ('coin_name', 'TEXT', 1, 0),
         ('price', 'REAL', 1, 0)
     ]
+
+
+def test_foreign_key_constraint(sqlite_connection):
+    storage = SqliteStorage(sqlite_connection)
+    storage.create_tables()
+
+    with pytest.raises(sqlite3.IntegrityError):
+        sqlite_connection.execute(
+            '''
+            INSERT INTO coin_prices
+            (snapshot_id, coin_id, coin_name, price)
+            VALUES (?, ?, ?, ?)
+            ''',
+            (999, 'eth', 'ethereum', 70)
+        )
 
 
 def test_save_in_table(data_coin, sqlite_storage ,sqlite_connection):

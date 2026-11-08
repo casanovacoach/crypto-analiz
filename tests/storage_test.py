@@ -71,8 +71,8 @@ def test_save_in_table(data_coin, sqlite_storage ,sqlite_connection):
 
     bitcoin = data_coin['BIT']
     saved_bitcoin = sqlite_connection.execute('''SELECT snapshot_id, coin_id, coin_name, price FROM coin_prices 
-                                                   WHERE coin_id = ? ''',
-                                                (bitcoin.coin_id,) ).fetchone()
+                                                   WHERE snapshot_id = ? AND coin_id = ? ''',
+                                                (1, bitcoin.coin_id,) ).fetchone()
 
     assert saved_bitcoin == (1,
                              bitcoin.coin_id,
@@ -112,7 +112,10 @@ def test_price_change(sqlite_db, ethereum):
         ]
 
     assert actual == expected
-    assert all(isinstance(row[1], str) for row in history)
+    assert all(
+        isinstance(created_at, str)
+        for _, created_at, _, _, _ in history
+    )
 
 
 def test_price_change_unknown_coin(sqlite_db):
@@ -130,7 +133,7 @@ def test_compare_snapshots(sqlite_db):
     assert compare == expected
 
 
-def test_price_change_unknown_coin(sqlite_db):
+def test_compare_snapshots_invalid_ids(sqlite_db):
     compare = sqlite_db.compare_snapshots(100, 500)
 
     assert compare == []

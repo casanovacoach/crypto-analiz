@@ -32,4 +32,18 @@ def test_list_snapshots(sqlite_db):
     assert results[1][0] == 1
     assert results[0][0] == 2
 
+def test_price_change(sqlite_db, ethereum):
+    history = sqlite_db.price_change(ethereum.coin_id)
 
+    actual = [
+        (1, 'eth', 'ethereum', 70),
+        (2, 'eth', 'ethereum', 63)
+    ]
+
+    expected = [
+        (snapshot_id, coin_id, coin_name, price)
+        for snapshot_id, created_at, coin_id, coin_name, price in history
+        ]
+
+    assert actual == expected
+    assert all(isinstance(row[1], str) for row in history)

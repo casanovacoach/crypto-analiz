@@ -27,6 +27,7 @@ load_dotenv()
 
 app = typer.Typer()
 
+settings = Settings()
 
 @app.command()
 def main(
@@ -111,46 +112,55 @@ def main(
         StorageType.SQLITE: SqliteStorage,
     }
 
-    settings = Settings()
-
     storage_data = {
         "report" : report.__dict__,
         "coins" : collection.coins
     }
     storage_factory = StorageFactory(storage_factories)
-    storage = storage_factory.create(settings.storage)
-    storage.save(storage_data)
+    if settings.storage == StorageType.SQLITE:
+        connection = sqlite3.connect(settings.database_path)
+
+        with closing(connection):
+            storage = storage_factory.create(settings.storage, connection)
+            storage.create_tables()
+            storage.save(storage_data)
+    else:
+        storage = storage_factory.create(settings.storage)
+        storage.save(storage_data)
 
 @app.command("list-snapshots")
 def list_snapshots_command():
-    storage = SqliteStorage()
-    snapshots = storage.list_snapshots()
+    connection = sqlite3.connect(settings.database_path)
+    with closing(connection):
+        storage = SqliteStorage(connection)
+        snapshots = storage.list_snapshots()
 
-    if not snapshots:
-        typer.echo("Снимки пока не сохранены.")
-        return
+        if not snapshots:
+            typer.echo("Снимки пока не сохранены.")
+            return
 
-    for snapshot_id, created_at in snapshots:
-        typer.echo(f'{snapshot_id} | {created_at}')
+        for snapshot_id, created_at in snapshots:
+            typer.echo(f'{snapshot_id} | {created_at}')
 
 @app.command("compare-snapshots")
 def compare_snapshot_command(
         old_id: Annotated[int, typer.Argument()],
         new_id: Annotated[int, typer.Argument()]):
+    connection = sqlite3.connect(settings.database_path)
+    with closing(connection):
+        storage = SqliteStorage(connection)
+        results = storage.compare_snapshots(old_id, new_id)
+        if not results:
+            typer.echo("Нет данных для сравнения")
+            return
 
-    storage = SqliteStorage()
-    results = storage.compare_snapshots(old_id, new_id)
-    if not results:
-        typer.echo("Нет данных для сравнения")
-        return
+        typer.echo(f'Сравнение снимков {old_id}, и {new_id}:')
 
-    typer.echo(f'Сравнение снимков {old_id}, и {new_id}:')
-
-    for coin_id, coin_name, old_price, new_price, price_difference in results:
-        typer.echo(
-            f"{coin_name} ({coin_id}): "
-            f"{old_price} -> {new_price} "
-            f"({price_difference:+})"
-        )
+        for coin_id, coin_name, old_price, new_price, price_difference in results:
+            typer.echo(
+                f"{coin_name} ({coin_id}): "
+                f"{old_price} -> {new_price} "
+                f"({price_difference:+})"
+            )
 if __name__ == "__main__":
     app()

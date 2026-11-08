@@ -16,6 +16,7 @@ class Settings:
         self.storage: StorageType = StorageType(
             os.getenv("STORAGE", "json")
         )
+        self.database_path = os.getenv("DATABASE_PATH", "crypto.db")
 
 
 settings = Settings()

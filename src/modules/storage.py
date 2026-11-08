@@ -100,7 +100,8 @@ class SqliteStorage(BaseStorage):
                     JOIN coin_prices AS new
                     ON old.coin_id = new.coin_id
                     WHERE old.snapshot_id = ?
-                    AND new.snapshot_id = ?''',
+                    AND new.snapshot_id = ?
+                    ORDER BY old.coin_id ASC''',
                     (old_id, new_id)
                 )
             results = cursor.fetchall()

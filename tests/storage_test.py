@@ -47,3 +47,13 @@ def test_price_change(sqlite_db, ethereum):
 
     assert actual == expected
     assert all(isinstance(row[1], str) for row in history)
+
+
+def test_compare_snapshots(sqlite_db):
+    compare = sqlite_db.compare_snapshots(1, 2)
+    expected = [
+        ('bit', 'bitcoin', 1000, 1200, 200),
+        ('dog', 'dogcoin', 25, 32.5, 7.5),
+        ('eth', 'ethereum', 70, 63, -7)
+    ]
+    assert compare == expected

@@ -1,11 +1,59 @@
+from modules.storage import SqliteStorage
+
+
+def test_create_tables(sqlite_connection):
+    storage = SqliteStorage(sqlite_connection)
+    storage.create_tables()
+
+    tables = sqlite_connection.execute(
+        "SELECT name FROM sqlite_master WHERE type = 'table'"
+    ).fetchall()
+
+    table_names = [row[0] for row in tables]
+
+    assert 'snapshots' in table_names
+    assert 'coin_prices' in table_names
+
+
+def test_create_tables_columns(sqlite_connection):
+    storage = SqliteStorage(sqlite_connection)
+    storage.create_tables()
+
+    snapshots = sqlite_connection.execute(
+        "PRAGMA table_info(snapshots)"
+    ).fetchall()
+
+    coin_prices = sqlite_connection.execute(
+        "PRAGMA table_info(coin_prices)"
+    ).fetchall()
+
+    assert [
+        (column[1], column[2], column[3], column[5])
+        for column in snapshots
+    ] == [
+        ('snapshot_id', 'INTEGER', 0, 1),
+        ('created_at', 'TEXT', 0, 0)
+    ]
+
+    assert [
+        (column[1], column[2], column[3], column[5])
+        for column in coin_prices
+    ] == [
+        ('snapshot_id', 'INTEGER', 1, 1),
+        ('coin_id', 'TEXT', 1, 2),
+        ('coin_name', 'TEXT', 1, 0),
+        ('price', 'REAL', 1, 0)
+    ]
+
+
 def test_save_in_table(data_coin, sqlite_storage ,sqlite_connection):
     sqlite_storage.save({'coins': data_coin})
-    saved_coins = sqlite_connection.execute('''SELECT * FROM coin_prices''')
+    saved_coins = sqlite_connection.execute('''SELECT snapshot_id, coin_id, coin_name, price FROM coin_prices''')
     rows = saved_coins.fetchall()
 
     bitcoin = data_coin['BIT']
-    saved_bitcoin = sqlite_connection.execute('''SELECT * FROM coin_prices 
-                                                   WHERE coin_id == ? ''',
+    saved_bitcoin = sqlite_connection.execute('''SELECT snapshot_id, coin_id, coin_name, price FROM coin_prices 
+                                                   WHERE coin_id = ? ''',
                                                 (bitcoin.coin_id,) ).fetchone()
 
     assert saved_bitcoin == (1,
@@ -35,12 +83,12 @@ def test_list_snapshots(sqlite_db):
 def test_price_change(sqlite_db, ethereum):
     history = sqlite_db.price_change(ethereum.coin_id)
 
-    actual = [
+    expected = [
         (1, 'eth', 'ethereum', 70),
         (2, 'eth', 'ethereum', 63)
     ]
 
-    expected = [
+    actual = [
         (snapshot_id, coin_id, coin_name, price)
         for snapshot_id, created_at, coin_id, coin_name, price in history
         ]

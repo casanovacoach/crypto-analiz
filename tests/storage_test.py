@@ -57,3 +57,21 @@ def test_compare_snapshots(sqlite_db):
         ('eth', 'ethereum', 70, 63, -7)
     ]
     assert compare == expected
+
+
+def test_get_top_price_movers(sqlite_db):
+    top_gainers, top_losers = sqlite_db.get_top_price_movers()
+    expected_gainers = [
+        (1, 2, 'dog', 'dogcoin', 32.5, 30.0),
+        (1, 2, 'bit', 'bitcoin', 1200, 20.0),
+        (1, 2, 'eth', 'ethereum', 63, -10.0)
+    ]
+
+    expected_losers = [
+        (1, 2, 'eth', 'ethereum', 63, -10.0),
+        (1, 2, 'bit', 'bitcoin', 1200, 20.0),
+        (1, 2, 'dog', 'dogcoin', 32.5, 30.0)
+    ]
+
+    assert top_losers == expected_losers
+    assert top_gainers == expected_gainers

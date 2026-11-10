@@ -13,11 +13,12 @@ def sqlite_connection():
     yield conn
     conn.close()
 
+
 @pytest.fixture
-def sqlite_storage(sqlite_connection):
-    storage = SqliteStorage(sqlite_connection)
-    storage.create_tables()
-    return storage
+def sqlite_storage():
+    with SqliteStorage(":memory:") as storage:
+        yield storage
+
 
 @pytest.fixture
 def sqlite_db(sqlite_storage, data_coin, data_coin_second):

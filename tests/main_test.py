@@ -13,25 +13,33 @@ def test_app(mocker, bitcoin, ethereum, dogcoin):
 
     coins = [bitcoin, ethereum, dogcoin]
 
-
     provider = mocker.MagicMock()
     provider.fetch_coins_data.return_value = coins
 
     provider_factory = mocker.MagicMock()
     provider_factory.create.return_value = provider
-    storage_mock = MagicMock()
-    storage_factory_mock = MagicMock()
-    mocker.patch("modules.main.StorageFactory",
-                 return_value=storage_factory_mock)
 
-    storage_factory_mock.create.return_value=storage_mock
     mocker.patch(
         "modules.main.ProviderFactory",
         return_value=provider_factory,
     )
 
-    json_output_mock = mocker.patch("modules.main.JsonOutput")
+    storage_mock = MagicMock()
 
+    storage_factory_mock = MagicMock()
+    storage_context = MagicMock()
+
+    storage_context.__enter__.return_value = storage_mock
+    storage_context.__exit__.return_value = False
+
+    storage_factory_mock.create.return_value = storage_context
+
+    mocker.patch(
+        "modules.main.storage_factory",
+        storage_factory_mock,
+    )
+
+    json_output_mock = mocker.patch("modules.main.JsonOutput")
     result = runner.invoke(
         app,
         [

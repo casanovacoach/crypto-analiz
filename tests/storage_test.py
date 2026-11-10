@@ -4,11 +4,8 @@ import sqlite3
 import pytest
 
 
-def test_create_tables(sqlite_connection):
-    storage = SqliteStorage(sqlite_connection)
-    storage.create_tables()
-
-    tables = sqlite_connection.execute(
+def test_create_tables(sqlite_storage):
+    tables = sqlite_storage.connection.execute(
         "SELECT name FROM sqlite_master WHERE type = 'table'"
     ).fetchall()
 
@@ -18,15 +15,12 @@ def test_create_tables(sqlite_connection):
     assert 'coin_prices' in table_names
 
 
-def test_create_tables_columns(sqlite_connection):
-    storage = SqliteStorage(sqlite_connection)
-    storage.create_tables()
-
-    snapshots = sqlite_connection.execute(
+def test_create_tables_columns(sqlite_storage):
+    snapshots = sqlite_storage.connection.execute(
         "PRAGMA table_info(snapshots)"
     ).fetchall()
 
-    coin_prices = sqlite_connection.execute(
+    coin_prices = sqlite_storage.connection.execute(
         "PRAGMA table_info(coin_prices)"
     ).fetchall()
 
@@ -48,13 +42,9 @@ def test_create_tables_columns(sqlite_connection):
         ('price', 'REAL', 1, 0)
     ]
 
-
-def test_foreign_key_constraint(sqlite_connection):
-    storage = SqliteStorage(sqlite_connection)
-    storage.create_tables()
-
+def test_foreign_key_constraint(sqlite_storage):
     with pytest.raises(sqlite3.IntegrityError):
-        sqlite_connection.execute(
+        sqlite_storage.connection.execute(
             '''
             INSERT INTO coin_prices
             (snapshot_id, coin_id, coin_name, price)
@@ -64,22 +54,35 @@ def test_foreign_key_constraint(sqlite_connection):
         )
 
 
-def test_save_in_table(data_coin, sqlite_storage ,sqlite_connection):
+def test_save_in_table(data_coin, sqlite_storage):
     sqlite_storage.save({'coins': data_coin})
-    saved_coins = sqlite_connection.execute('''SELECT snapshot_id, coin_id, coin_name, price FROM coin_prices''')
-    rows = saved_coins.fetchall()
+
+    saved_coins = sqlite_storage.connection.execute(
+        '''
+        SELECT snapshot_id, coin_id, coin_name, price
+        FROM coin_prices
+        '''
+    ).fetchall()
 
     bitcoin = data_coin['BIT']
-    saved_bitcoin = sqlite_connection.execute('''SELECT snapshot_id, coin_id, coin_name, price FROM coin_prices 
-                                                   WHERE snapshot_id = ? AND coin_id = ? ''',
-                                                (1, bitcoin.coin_id,) ).fetchone()
 
-    assert saved_bitcoin == (1,
-                             bitcoin.coin_id,
-                             bitcoin.name,
-                             bitcoin.price,)
+    saved_bitcoin = sqlite_storage.connection.execute(
+        '''
+        SELECT snapshot_id, coin_id, coin_name, price
+        FROM coin_prices
+        WHERE snapshot_id = ? AND coin_id = ?
+        ''',
+        (1, bitcoin.coin_id)
+    ).fetchone()
 
-    assert len(rows) == len(data_coin)
+    assert saved_bitcoin == (
+        1,
+        bitcoin.coin_id,
+        bitcoin.name,
+        bitcoin.price,
+    )
+
+    assert len(saved_coins) == len(data_coin)
 
 def test_save_snapshot_created_at(mocker, sqlite_storage, data_coin):
     mock_datetime = mocker.patch("modules.storage.datetime")

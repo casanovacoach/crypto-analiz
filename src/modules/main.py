@@ -1,11 +1,9 @@
 import os
 import requests
 import typer
-import sqlite3
 
 from typing import Annotated
 from dotenv import load_dotenv
-from contextlib import closing
 
 from modules.api_request import CoinGeckoRequest, CoinMarketCapRequest
 from modules.analysis import (
@@ -20,14 +18,21 @@ from modules.output import ConsoleOutput, CsvOutput, JsonOutput
 from modules.factory import ProviderFactory, OutputFactory, StorageFactory
 from modules.report import Report
 from modules.typer_option import Source, OutputFormat
-from modules.storage import JsonStorage, SqliteStorage
 from modules.settings import Settings, StorageType
+from modules.storage import JsonStorage, SqliteStorage
 
 load_dotenv()
 
 app = typer.Typer()
 
 settings = Settings()
+
+storage_factories = {
+    StorageType.JSON: JsonStorage,
+    StorageType.SQLITE: lambda: SqliteStorage(settings.database_path),
+}
+
+storage_factory = StorageFactory(storage_factories)
 
 @app.command()
 def main(
@@ -107,32 +112,18 @@ def main(
 
     output_handler.output()
 
-    storage_factories = {
-        StorageType.JSON: JsonStorage,
-        StorageType.SQLITE: SqliteStorage,
-    }
 
     storage_data = {
         "report" : report.__dict__,
         "coins" : collection.coins
     }
-    storage_factory = StorageFactory(storage_factories)
-    if settings.storage == StorageType.SQLITE:
-        connection = sqlite3.connect(settings.database_path)
 
-        with closing(connection):
-            storage = storage_factory.create(settings.storage, connection)
-            storage.create_tables()
-            storage.save(storage_data)
-    else:
-        storage = storage_factory.create(settings.storage)
+    with storage_factory.create(settings.storage) as storage:
         storage.save(storage_data)
 
 @app.command("list-snapshots")
 def list_snapshots_command():
-    connection = sqlite3.connect(settings.database_path)
-    with closing(connection):
-        storage = SqliteStorage(connection)
+    with storage_factory.create(StorageType.SQLITE) as storage:
         snapshots = storage.list_snapshots()
 
         if not snapshots:
@@ -145,11 +136,11 @@ def list_snapshots_command():
 @app.command("compare-snapshots")
 def compare_snapshot_command(
         old_id: Annotated[int, typer.Argument()],
-        new_id: Annotated[int, typer.Argument()]):
-    connection = sqlite3.connect(settings.database_path)
-    with closing(connection):
-        storage = SqliteStorage(connection)
+        new_id: Annotated[int, typer.Argument()]
+):
+    with storage_factory.create(StorageType.SQLITE) as storage:
         results = storage.compare_snapshots(old_id, new_id)
+
         if not results:
             typer.echo("Нет данных для сравнения")
             return

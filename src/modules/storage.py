@@ -3,7 +3,6 @@ import sqlite3
 
 from abc import abstractmethod, ABC
 from datetime import datetime
-from contextlib import closing
 
 
 class BaseStorage(ABC):
@@ -11,6 +10,12 @@ class BaseStorage(ABC):
     @abstractmethod
     def save(self, results: dict) -> None:
         pass
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        return False
 
 
 class JsonStorage(BaseStorage):
@@ -21,9 +26,31 @@ class JsonStorage(BaseStorage):
 
 class SqliteStorage(BaseStorage):
 
-    def __init__(self, connection ):
-        self.connection = connection
-        self.connection.execute("PRAGMA foreign_keys = ON")
+    def __init__(self, database_path):
+        self.database_path = database_path
+        self.connection = None
+
+    def __enter__(self):
+        self.connection = sqlite3.connect(self.database_path)
+
+        try:
+            self.connection.execute("PRAGMA foreign_keys = ON")
+            self.create_tables()
+
+        except BaseException:
+            self.connection.close()
+            self.connection = None
+            raise
+
+        return self
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        if self.connection is not None:
+            self.connection.close()
+            self.connection = None
+
+        return False
+
 
     def create_tables(self):
         with self.connection as conn:

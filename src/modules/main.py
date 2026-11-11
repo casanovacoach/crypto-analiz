@@ -3,7 +3,6 @@ import requests
 import typer
 
 from typing import Annotated
-from dotenv import load_dotenv
 
 from modules.api_request import CoinGeckoRequest, CoinMarketCapRequest
 from modules.analysis import (
@@ -18,14 +17,11 @@ from modules.output import ConsoleOutput, CsvOutput, JsonOutput
 from modules.factory import ProviderFactory, OutputFactory, StorageFactory
 from modules.report import Report
 from modules.typer_option import Source, OutputFormat
-from modules.settings import Settings, StorageType
+from modules.settings import settings, StorageType
 from modules.storage import JsonStorage, SqliteStorage
-
-load_dotenv()
 
 app = typer.Typer()
 
-settings = Settings()
 
 storage_factories = {
     StorageType.JSON: JsonStorage,
@@ -148,10 +144,17 @@ def compare_snapshot_command(
         typer.echo(f'Сравнение снимков {old_id}, и {new_id}:')
 
         for coin_id, coin_name, old_price, new_price, price_difference in results:
-            typer.echo(
-                f"{coin_name} ({coin_id}): "
-                f"{old_price} -> {new_price} "
-                f"({price_difference:+})"
-            )
+
+            if new_price is None:
+                typer.echo(
+                    f"{coin_name} ({coin_id}): "
+                    f"{old_price} -> нет в снимке"
+                )
+            else:
+                typer.echo(
+                    f"{coin_name} ({coin_id}): "
+                    f"{old_price} -> {new_price} "
+                    f"({price_difference:+})"
+                )
 if __name__ == "__main__":
     app()

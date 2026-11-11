@@ -100,37 +100,46 @@ class SqliteStorage(BaseStorage):
             return results
 
     def price_change(self, coin_id):
-
         with self.connection as conn:
             cursor = conn.execute(
-                    '''SELECT s.snapshot_id, s.created_at, cp.coin_id, cp.coin_name, cp.price FROM snapshots AS s
-                             JOIN coin_prices AS cp
-                             ON s.snapshot_id = cp.snapshot_id
-                             WHERE cp.coin_id = ?
-                             ORDER BY s.snapshot_id ASC''',
-                             (str(coin_id),)
-                            )
+                '''
+                SELECT s.snapshot_id,
+                       s.created_at,
+                       cp.coin_id,
+                       cp.coin_name,
+                       cp.price
+                FROM snapshots AS s
+                         JOIN coin_prices AS cp
+                              ON s.snapshot_id = cp.snapshot_id
+                WHERE cp.coin_id = ?
+                ORDER BY s.snapshot_id ASC
+                ''',
+                (str(coin_id),)
+            )
 
             results = cursor.fetchall()
 
             return results
 
-
     def compare_snapshots(self, old_id, new_id):
         with self.connection as conn:
             cursor = conn.execute(
-                    '''SELECT old.coin_id, old.coin_name,
-                    old.price AS old_price,
-                    new.price AS new_price,
-                    new.price - old.price AS price_difference
-                    FROM coin_prices AS old
-                    JOIN coin_prices AS new
-                    ON old.coin_id = new.coin_id
-                    WHERE old.snapshot_id = ?
-                    AND new.snapshot_id = ?
-                    ORDER BY old.coin_id ASC''',
-                    (old_id, new_id)
-                )
+                '''
+                SELECT old.coin_id,
+                       old.coin_name,
+                       old.price AS old_price,
+                       new.price AS new_price,
+                       new.price - old.price AS price_difference
+                FROM coin_prices AS old
+                         LEFT JOIN coin_prices AS new
+                                   ON old.coin_id = new.coin_id
+                                       AND new.snapshot_id = ?
+                WHERE old.snapshot_id = ?
+                ORDER BY old.coin_id ASC
+                ''',
+                (new_id, old_id)
+            )
+
             results = cursor.fetchall()
 
             return results

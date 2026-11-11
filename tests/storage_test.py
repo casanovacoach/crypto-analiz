@@ -1,4 +1,4 @@
-from modules.storage import SqliteStorage
+from types import SimpleNamespace
 
 import sqlite3
 import pytest
@@ -142,22 +142,49 @@ def test_compare_snapshots_invalid_ids(sqlite_db):
     assert compare == []
 
 
-def test_get_top_price_movers(sqlite_db):
+def test_get_top_price_movers(sqlite_db, data_coin, data_coin_second):
+    old_coins = [
+        *data_coin.coins,
+        SimpleNamespace(coin_id='extra-a', name='Extra A', price=100.0),
+        SimpleNamespace(coin_id='extra-b', name='Extra B', price=100.0),
+        SimpleNamespace(coin_id='extra-c', name='Extra C', price=100.0),
+        SimpleNamespace(coin_id='extra-d', name='Extra D', price=100.0),
+    ]
+
+    new_coins = [
+        *data_coin_second.coins,
+        SimpleNamespace(coin_id='extra-a', name='Extra A', price=150.0),
+        SimpleNamespace(coin_id='extra-b', name='Extra B', price=140.0),
+        SimpleNamespace(coin_id='extra-c', name='Extra C', price=80.0),
+        SimpleNamespace(coin_id='extra-d', name='Extra D', price=70.0),
+    ]
+
+    sqlite_db.save({'coins': old_coins})
+    sqlite_db.save({'coins': new_coins})
+
     top_gainers, top_losers = sqlite_db.get_top_price_movers()
+
     expected_gainers = [
-        (1, 2, 'dog', 'dogcoin', 32.5, 30.0),
-        (1, 2, 'bit', 'bitcoin', 1200, 20.0),
-        (1, 2, 'eth', 'ethereum', 63, -10.0)
+        (3, 4, 'extra-a', 'Extra A', 150.0, 50.0),
+        (3, 4, 'extra-b', 'Extra B', 140.0, 40.0),
+        (3, 4, 'dog', 'dogcoin', 32.5, 30.0),
+        (3, 4, 'bit', 'bitcoin', 1200, 20.0),
+        (3, 4, 'eth', 'ethereum', 63, -10.0),
     ]
 
     expected_losers = [
-        (1, 2, 'eth', 'ethereum', 63, -10.0),
-        (1, 2, 'bit', 'bitcoin', 1200, 20.0),
-        (1, 2, 'dog', 'dogcoin', 32.5, 30.0)
+        (3, 4, 'extra-d', 'Extra D', 70.0, -30.0),
+        (3, 4, 'extra-c', 'Extra C', 80.0, -20.0),
+        (3, 4, 'eth', 'ethereum', 63, -10.0),
+        (3, 4, 'bit', 'bitcoin', 1200, 20.0),
+        (3, 4, 'dog', 'dogcoin', 32.5, 30.0),
     ]
 
-    assert top_losers == expected_losers
+    assert len(top_gainers) == 5
+    assert len(top_losers) == 5
+
     assert top_gainers == expected_gainers
+    assert top_losers == expected_losers
 
 def test_get_top_price_movers_without_two_snapshots(sqlite_storage, data_coin):
     sqlite_storage.save({'coins': data_coin})

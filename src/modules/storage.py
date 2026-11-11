@@ -20,6 +20,14 @@ class BaseStorage(ABC):
 
 class JsonStorage(BaseStorage):
 
+    @staticmethod
+    def serialize(report: dict) -> str:
+        return json.dumps(
+            report,
+            indent=4,
+            ensure_ascii=False
+        )
+
     def save(self, results: dict) -> None:
         with open('crypto_report.json', 'w', encoding='UTF8') as f:
             json.dump(results['report'], f, indent=4, ensure_ascii=False)

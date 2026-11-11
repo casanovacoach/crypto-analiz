@@ -10,6 +10,8 @@ def test_fetch_coins_data_gecko(mocker):
 
     coin = {    'name' : 'bitcoin',
                 'symbol' : 'BTS',
+                'id' : 'bts',
+                'current_price' : 5000,
                 'price_change_percentage_24h' : 5.0,
                 'total_volume' : 71000,
                 'market_cap' : 900000
@@ -28,8 +30,12 @@ def test_fetch_coins_data_gecko(mocker):
                                              timeout=10)
 
     assert coins_fake_gecko[0].name == 'bitcoin'
+    assert coins_fake_gecko[0].coin_id == 'bts'
+    assert coins_fake_gecko[0].symbol == 'BTS'
     assert coins_fake_gecko[0].volume == 71000
+    assert coins_fake_gecko[0].price == 5000
     assert coins_fake_gecko[0].change_24h == 5.0
+    assert coins_fake_gecko[0].volume == 71000
 
 def test_fetch_coins_data_market_cap(mocker):
     session_mock = mocker.Mock()
@@ -39,9 +45,11 @@ def test_fetch_coins_data_market_cap(mocker):
 
     coin = {
         'name': 'bitcoin',
+        'id' : 'bts',
         'symbol': 'BTS',
         'quote': {
             'USD': {
+                'price' : 5000,
                 'percent_change_24h': 5.0,
                 'volume_24h': None,
                 'market_cap': 900000
@@ -66,7 +74,9 @@ def test_fetch_coins_data_market_cap(mocker):
                                              timeout=10)
 
     assert coins_fake_market_cap[0].name == 'bitcoin'
+    assert coins_fake_market_cap[0].coin_id == 'bts'
     assert coins_fake_market_cap[0].volume == 0
+    assert coins_fake_market_cap[0].price == 5000
     assert coins_fake_market_cap[0].change_24h == 5.0
 
 

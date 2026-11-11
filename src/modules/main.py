@@ -3,7 +3,6 @@ import requests
 import typer
 
 from typing import Annotated
-from dotenv import load_dotenv
 
 from modules.api_request import CoinGeckoRequest, CoinMarketCapRequest
 from modules.analysis import (
@@ -14,21 +13,28 @@ from modules.analysis import (
 )
 from modules.coin import CoinCollection
 from modules.output import ConsoleOutput, CsvOutput, JsonOutput
-from modules.factory import ProviderFactory, OutputFactory
+
+from modules.factory import ProviderFactory, OutputFactory, StorageFactory
 from modules.report import Report
 from modules.typer_option import Source, OutputFormat
-
-
-load_dotenv()
+from modules.settings import settings, StorageType
+from modules.storage import JsonStorage, SqliteStorage
 
 app = typer.Typer()
 
+
+storage_factories = {
+    StorageType.JSON: JsonStorage,
+    StorageType.SQLITE: lambda: SqliteStorage(settings.database_path),
+}
+
+storage_factory = StorageFactory(storage_factories)
 
 @app.command()
 def main(
     source: Annotated[Source, typer.Option()],
     output: Annotated[OutputFormat, typer.Option()],
-    top: Annotated[int, typer.Option()] = 3,
+    top: Annotated[int, typer.Option()] = 3
 ):
     COINGECKO_URL = 'https://api.coingecko.com/api/v3/coins/markets'
 
@@ -103,5 +109,52 @@ def main(
     output_handler.output()
 
 
+    storage_data = {
+        "report" : report.__dict__,
+        "coins" : collection.coins
+    }
+
+    with storage_factory.create(settings.storage) as storage:
+        storage.save(storage_data)
+
+@app.command("list-snapshots")
+def list_snapshots_command():
+    with storage_factory.create(StorageType.SQLITE) as storage:
+        snapshots = storage.list_snapshots()
+
+        if not snapshots:
+            typer.echo("Снимки пока не сохранены.")
+            return
+
+        for snapshot_id, created_at in snapshots:
+            typer.echo(f'{snapshot_id} | {created_at}')
+
+@app.command("compare-snapshots")
+def compare_snapshot_command(
+        old_id: Annotated[int, typer.Argument()],
+        new_id: Annotated[int, typer.Argument()]
+):
+    with storage_factory.create(StorageType.SQLITE) as storage:
+        results = storage.compare_snapshots(old_id, new_id)
+
+        if not results:
+            typer.echo("Нет данных для сравнения")
+            return
+
+        typer.echo(f'Сравнение снимков {old_id}, и {new_id}:')
+
+        for coin_id, coin_name, old_price, new_price, price_difference in results:
+
+            if new_price is None:
+                typer.echo(
+                    f"{coin_name} ({coin_id}): "
+                    f"{old_price} -> нет в снимке"
+                )
+            else:
+                typer.echo(
+                    f"{coin_name} ({coin_id}): "
+                    f"{old_price} -> {new_price} "
+                    f"({price_difference:+})"
+                )
 if __name__ == "__main__":
     app()

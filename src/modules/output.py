@@ -1,5 +1,5 @@
 import csv
-import json
+from modules.storage import JsonStorage
 from abc import abstractmethod, ABC
 
 from rich.console import Console
@@ -37,10 +37,8 @@ class ConsoleOutput(Output):
 
 class JsonOutput(Output):
 
-
     def output(self):
-        with open('crypto_report.json', 'w', encoding='UTF8') as f:
-            json.dump(self.report.__dict__, f, indent=4, ensure_ascii=False)
+        print(JsonStorage.serialize(self.report.__dict__))
 
 
 class CsvOutput(Output):

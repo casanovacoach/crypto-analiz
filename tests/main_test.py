@@ -1,3 +1,5 @@
+from unittest.mock import MagicMock
+
 from typer.testing import CliRunner
 
 from modules.main import app
@@ -11,7 +13,6 @@ def test_app(mocker, bitcoin, ethereum, dogcoin):
 
     coins = [bitcoin, ethereum, dogcoin]
 
-
     provider = mocker.MagicMock()
     provider.fetch_coins_data.return_value = coins
 
@@ -23,11 +24,26 @@ def test_app(mocker, bitcoin, ethereum, dogcoin):
         return_value=provider_factory,
     )
 
-    json_output_mock = mocker.patch("modules.main.JsonOutput")
+    storage_mock = MagicMock()
 
+    storage_factory_mock = MagicMock()
+    storage_context = MagicMock()
+
+    storage_context.__enter__.return_value = storage_mock
+    storage_context.__exit__.return_value = False
+
+    storage_factory_mock.create.return_value = storage_context
+
+    mocker.patch(
+        "modules.main.storage_factory",
+        storage_factory_mock,
+    )
+
+    json_output_mock = mocker.patch("modules.main.JsonOutput")
     result = runner.invoke(
         app,
         [
+            "main",
             "--source", "coinmarketcap",
             "--output", "json",
             "--top", "2",
@@ -46,5 +62,10 @@ def test_app(mocker, bitcoin, ethereum, dogcoin):
 
     assert len(report.top_gainers) == 2
     assert len(report.top_losers) == 2
+    storage_factory_mock.create.assert_called_once()
+    storage_mock.save.assert_called_once()
+    saved_agrs = storage_mock.save.call_args.args[0]
+    assert saved_agrs["coins"] == coins
+    assert saved_agrs["report"] == report.__dict__
 
     json_output_mock.return_value.output.assert_called_once_with()

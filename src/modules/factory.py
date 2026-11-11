@@ -12,3 +12,10 @@ class OutputFactory:
 
     def create(self, output_format):
         return self.outputs[output_format]()
+
+class StorageFactory:
+    def __init__(self, storage):
+        self.storage = storage
+
+    def create(self, storage_format, *args):
+        return self.storage[storage_format](*args)

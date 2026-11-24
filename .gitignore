@@ -15,6 +15,7 @@ crypto_report.csv
 
 #db
 crypto.db
+db.sqlite3
 
 #Sectets
 .env

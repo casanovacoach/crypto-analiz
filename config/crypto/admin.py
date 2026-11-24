@@ -1,8 +1,9 @@
 from django.contrib import admin
 from .models import Snapshot, CoinPrice
-# Register your models here.
 
-admin.site.register(CoinPrice)
+@admin.register(CoinPrice)
+class CoinPriceAdmin(admin.ModelAdmin):
+    list_display = ('id', 'coin_id', 'coin_name', 'symbol', 'price', 'snapshot_id')
 
 class CoinPriceInline(admin.TabularInline):
     model = CoinPrice

@@ -14,6 +14,7 @@ class CoinPrice(models.Model):
     snapshot = models.ForeignKey(Snapshot, on_delete=models.CASCADE)
     coin_id = models.CharField(max_length=200)
     coin_name = models.CharField(max_length=200)
+    symbol = models.CharField(max_length=50, null=False)
     price = models.DecimalField(max_digits=40, decimal_places=20)
 
     class Meta:

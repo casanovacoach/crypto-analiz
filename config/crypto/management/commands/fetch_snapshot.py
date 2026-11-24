@@ -37,6 +37,7 @@ class Command(BaseCommand):
                 snapshot = snapshot,
                 coin_id = coin.coin_id,
                 coin_name = coin.name,
+                symbol = coin.symbol,
                 price = Decimal(str(coin.price)),
             )
 

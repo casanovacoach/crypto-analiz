@@ -1,6 +1,9 @@
 from django.http import HttpResponse
+from rest_framework.views import APIView, Response
+from .serializers import CryptoSerializer
 
-from django.shortcuts import render
+from crypto.models import CoinPrice
+
 
 # Create your views here.
 
@@ -12,3 +15,10 @@ def crypto(request):
 
 def snapshots(request, snap_id):
     return HttpResponse(f"<h1>Снимки</h1><p>id: {snap_id}</p>")
+
+
+class CoinAPIView(APIView):
+    def get(self, request, snap_id):
+        coins = CoinPrice.objects.filter(snapshot_id = snap_id)
+        serializer = CryptoSerializer(coins, many=True)
+        return Response({'Coins' : serializer.data})

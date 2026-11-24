@@ -24,8 +24,8 @@ def test_gainers_losers_analyze(data_coin,
 
 
 def test_top_volume_analyze():
-    dogcoin = Coin('dogcoin', 'DOG', 0.80004, 7000, 300)
-    godcoin = Coin('godcoin', 'GOD', 0.01, 9000, 100)
+    dogcoin = Coin('dogcoin', 'dog', 'DOG', 700, 0.80004, 7000, 300)
+    godcoin = Coin('godcoin', 'god', 'GOD', 10000, 0.01, 9000, 100)
     coins = [dogcoin, godcoin]
     collection = CoinCollection(coins)
     top_volume_coin = TopValueAnalysis(collection).analyze()

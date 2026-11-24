@@ -1,0 +1,195 @@
+from types import SimpleNamespace
+
+import sqlite3
+import pytest
+
+
+def test_create_tables(sqlite_storage):
+    tables = sqlite_storage.connection.execute(
+        "SELECT name FROM sqlite_master WHERE type = 'table'"
+    ).fetchall()
+
+    table_names = [row[0] for row in tables]
+
+    assert 'snapshots' in table_names
+    assert 'coin_prices' in table_names
+
+
+def test_create_tables_columns(sqlite_storage):
+    snapshots = sqlite_storage.connection.execute(
+        "PRAGMA table_info(snapshots)"
+    ).fetchall()
+
+    coin_prices = sqlite_storage.connection.execute(
+        "PRAGMA table_info(coin_prices)"
+    ).fetchall()
+
+    assert [
+        (column[1], column[2], column[3], column[5])
+        for column in snapshots
+    ] == [
+        ('snapshot_id', 'INTEGER', 0, 1),
+        ('created_at', 'TEXT', 0, 0)
+    ]
+
+    assert [
+        (column[1], column[2], column[3], column[5])
+        for column in coin_prices
+    ] == [
+        ('snapshot_id', 'INTEGER', 1, 1),
+        ('coin_id', 'TEXT', 1, 2),
+        ('coin_name', 'TEXT', 1, 0),
+        ('price', 'REAL', 1, 0)
+    ]
+
+def test_foreign_key_constraint(sqlite_storage):
+    with pytest.raises(sqlite3.IntegrityError):
+        sqlite_storage.connection.execute(
+            '''
+            INSERT INTO coin_prices
+            (snapshot_id, coin_id, coin_name, price)
+            VALUES (?, ?, ?, ?)
+            ''',
+            (999, 'eth', 'ethereum', 70)
+        )
+
+
+def test_save_in_table(data_coin, sqlite_storage):
+    sqlite_storage.save({'coins': data_coin})
+
+    saved_coins = sqlite_storage.connection.execute(
+        '''
+        SELECT snapshot_id, coin_id, coin_name, price
+        FROM coin_prices
+        '''
+    ).fetchall()
+
+    bitcoin = data_coin['BIT']
+
+    saved_bitcoin = sqlite_storage.connection.execute(
+        '''
+        SELECT snapshot_id, coin_id, coin_name, price
+        FROM coin_prices
+        WHERE snapshot_id = ? AND coin_id = ?
+        ''',
+        (1, bitcoin.coin_id)
+    ).fetchone()
+
+    assert saved_bitcoin == (
+        1,
+        bitcoin.coin_id,
+        bitcoin.name,
+        bitcoin.price,
+    )
+
+    assert len(saved_coins) == len(data_coin)
+
+def test_save_snapshot_created_at(mocker, sqlite_storage, data_coin):
+    mock_datetime = mocker.patch("modules.storage.datetime")
+    mock_datetime.now.return_value.strftime.return_value = "2026-11-08 10:00:00"
+
+    sqlite_storage.save({'coins': data_coin})
+
+    results = sqlite_storage.list_snapshots()
+
+    assert results[0][1] == "2026-11-08 10:00:00"
+
+def test_list_snapshots(sqlite_db):
+    results = sqlite_db.list_snapshots()
+
+    assert len(results) == 2
+    assert results[1][0] == 1
+    assert results[0][0] == 2
+
+def test_price_change(sqlite_db, ethereum):
+    history = sqlite_db.price_change(ethereum.coin_id)
+
+    expected = [
+        (1, 'eth', 'ethereum', 70),
+        (2, 'eth', 'ethereum', 63)
+    ]
+
+    actual = [
+        (snapshot_id, coin_id, coin_name, price)
+        for snapshot_id, created_at, coin_id, coin_name, price in history
+        ]
+
+    assert actual == expected
+    assert all(
+        isinstance(created_at, str)
+        for _, created_at, _, _, _ in history
+    )
+
+
+def test_price_change_unknown_coin(sqlite_db):
+    history = sqlite_db.price_change('unknown_coin')
+
+    assert history == []
+
+def test_compare_snapshots(sqlite_db):
+    compare = sqlite_db.compare_snapshots(1, 2)
+    expected = [
+        ('bit', 'bitcoin', 1000, 1200, 200),
+        ('dog', 'dogcoin', 25, 32.5, 7.5),
+        ('eth', 'ethereum', 70, 63, -7)
+    ]
+    assert compare == expected
+
+
+def test_compare_snapshots_invalid_ids(sqlite_db):
+    compare = sqlite_db.compare_snapshots(100, 500)
+
+    assert compare == []
+
+
+def test_get_top_price_movers(sqlite_db, data_coin, data_coin_second):
+    old_coins = [
+        *data_coin.coins,
+        SimpleNamespace(coin_id='extra-a', name='Extra A', price=100.0),
+        SimpleNamespace(coin_id='extra-b', name='Extra B', price=100.0),
+        SimpleNamespace(coin_id='extra-c', name='Extra C', price=100.0),
+        SimpleNamespace(coin_id='extra-d', name='Extra D', price=100.0),
+    ]
+
+    new_coins = [
+        *data_coin_second.coins,
+        SimpleNamespace(coin_id='extra-a', name='Extra A', price=150.0),
+        SimpleNamespace(coin_id='extra-b', name='Extra B', price=140.0),
+        SimpleNamespace(coin_id='extra-c', name='Extra C', price=80.0),
+        SimpleNamespace(coin_id='extra-d', name='Extra D', price=70.0),
+    ]
+
+    sqlite_db.save({'coins': old_coins})
+    sqlite_db.save({'coins': new_coins})
+
+    top_gainers, top_losers = sqlite_db.get_top_price_movers()
+
+    expected_gainers = [
+        (3, 4, 'extra-a', 'Extra A', 150.0, 50.0),
+        (3, 4, 'extra-b', 'Extra B', 140.0, 40.0),
+        (3, 4, 'dog', 'dogcoin', 32.5, 30.0),
+        (3, 4, 'bit', 'bitcoin', 1200, 20.0),
+        (3, 4, 'eth', 'ethereum', 63, -10.0),
+    ]
+
+    expected_losers = [
+        (3, 4, 'extra-d', 'Extra D', 70.0, -30.0),
+        (3, 4, 'extra-c', 'Extra C', 80.0, -20.0),
+        (3, 4, 'eth', 'ethereum', 63, -10.0),
+        (3, 4, 'bit', 'bitcoin', 1200, 20.0),
+        (3, 4, 'dog', 'dogcoin', 32.5, 30.0),
+    ]
+
+    assert len(top_gainers) == 5
+    assert len(top_losers) == 5
+
+    assert top_gainers == expected_gainers
+    assert top_losers == expected_losers
+
+def test_get_top_price_movers_without_two_snapshots(sqlite_storage, data_coin):
+    sqlite_storage.save({'coins': data_coin})
+
+    top_gainers, top_losers = sqlite_storage.get_top_price_movers()
+
+    assert top_gainers == []
+    assert top_losers == []

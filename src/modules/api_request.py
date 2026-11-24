@@ -80,7 +80,9 @@ class CoinGeckoRequest(APIRequest):
         for coin in data:
             record = Coin(
                 name=coin['name'],
+                coin_id=coin['id'],
                 symbol=coin['symbol'],
+                price=coin['current_price'],
                 change_24h=coin['price_change_percentage_24h'] or 0,
                 volume=coin['total_volume'] or 0,
                 market_cap=coin['market_cap'] or 0,
@@ -111,7 +113,9 @@ class CoinMarketCapRequest(APIRequest):
         for coin in data['data']:
             record = Coin(
                 name=coin['name'],
+                coin_id=coin['id'],
                 symbol=coin['symbol'],
+                price=coin['quote']['USD']['price'],
                 change_24h=coin['quote']['USD']['percent_change_24h'] or 0,
                 volume=coin['quote']['USD']['volume_24h'] or 0,
                 market_cap=coin['quote']['USD']['market_cap'] or 0,

@@ -4,7 +4,6 @@ import pytest
 from rich.text import Text
 
 import modules.output as output_module
-from types import SimpleNamespace
 
 from modules.output import (
     JsonOutput,
@@ -12,43 +11,50 @@ from modules.output import (
     ConsoleOutput,
 )
 
-@pytest.mark.parametrize('output_class, expected',
-                            [
-                                (JsonOutput, 'crypto_report.json'),
-                                (CsvOutput, 'crypto_report.csv'),
-                                (ConsoleOutput, 'Топ Роста и Падения')
-                            ]
-                                )
-def test_interface_output(output_class, expected,
-                          report,
-                          tmp_path,
-                          monkeypatch,
-                          capfd):
+@pytest.mark.parametrize(
+    'output_class, expected',
+    [
+        (JsonOutput, None),
+        (CsvOutput, 'crypto_report.csv'),
+        (ConsoleOutput, 'Топ Роста и Падения')
+    ]
+)
+def test_interface_output(
+        output_class,
+        expected,
+        report,
+        tmp_path,
+        monkeypatch,
+        capfd
+):
     monkeypatch.chdir(tmp_path)
+
     outputter = output_class(report)
     outputter.output()
-    if output_class is ConsoleOutput:
-        captured = capfd.readouterr()
+
+    captured = capfd.readouterr()
+
+    if output_class is JsonOutput:
+        actual = json.loads(captured.out)
+        assert actual == report.__dict__
+
+    elif output_class is ConsoleOutput:
         assert expected in captured.out
+
     else:
         path = tmp_path / expected
         assert path.exists()
 
 
-def test_json_output(report, tmp_path, monkeypatch):
+def test_json_output(report, capsys):
+    output = JsonOutput(report)
+    output.output()
 
-    monkeypatch.chdir(tmp_path)
-    path = tmp_path / 'crypto_report.json'
+    captured = capsys.readouterr()
 
-    json_output = JsonOutput(report)
-    json_output.output()
+    actual = json.loads(captured.out)
 
-    assert path.exists()
-
-    with open(path, 'r', encoding= 'UTF-8' ) as jf:
-        data = json.load(jf)
-
-        assert data == report.__dict__
+    assert actual == report.__dict__
 
 
 def test_csv_output(report, tmp_path, monkeypatch):
